@@ -7,7 +7,6 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; }
         
-        /* On-Screen Mobile Layout matching your sketch */
         .controls-container {
             position: absolute;
             bottom: 20px;
@@ -33,7 +32,6 @@
             align-items: flex-end;
         }
         
-        /* Steering Buttons (Round) */
         .steer-btn {
             width: 75px;
             height: 75px;
@@ -57,7 +55,6 @@
             transform: scale(0.92);
         }
 
-        /* Vertical Pedals matching your sketch layout */
         .pedal-btn {
             width: 65px;
             height: 50px;
@@ -102,14 +99,11 @@
 
     <div id="speedometer">SPEED: 0 MPH</div>
 
-    <!-- Controls matching your sketch layout -->
     <div class="controls-container">
-        <!-- Left side: Steering (Left / Right) -->
         <div class="steering-group">
             <button class="steer-btn" id="leftBtn">◀</button>
             <button class="steer-btn" id="rightBtn">▶</button>
         </div>
-        <!-- Right side: Vertical pedals (Accelerator on top, Brake/Reverse below) -->
         <div class="pedals-group">
             <button class="pedal-btn" id="accelBtn">GAS</button>
             <button class="pedal-btn" id="brakeBtn">BRAKE</button>
@@ -128,18 +122,17 @@
         document.body.appendChild(renderer.domElement);
 
         // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
         
-        const dirLight = new THREE.DirectionalLight(0xffea79, 0.8);
+        const dirLight = new THREE.DirectionalLight(0xffea79, 0.9);
         dirLight.position.set(30, 50, 30);
         scene.add(dirLight);
 
-        // --- REALISTIC ROAD MAP (White Center Lines & White Side Lines) ---
+        // --- CITY MAP & WHITE ROAD MARKINGS ---
         const cityGroup = new THREE.Group();
         const roadMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.9 });
         
-        // Main cross roads
         const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(300, 32), roadMat);
         mainRoadX.rotation.x = -Math.PI / 2;
         mainRoadX.position.y = 0.01;
@@ -150,94 +143,11 @@
         mainRoadZ.position.y = 0.02;
         cityGroup.add(mainRoadZ);
 
-        // Add Realistic White Markings
         const whiteLineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-
-        // Add white edge lines and dashed middle lines for roads
         for (let i = -145; i < 145; i += 12) {
-            // Center dashed white lines (X road)
             const dashX = new THREE.Mesh(new THREE.BoxGeometry(4, 0.03, 0.3), whiteLineMat);
             dashX.position.set(i, 0.03, 0);
             cityGroup.add(dashX);
 
-            // Center dashed white lines (Z road)
             const dashZ = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 4), whiteLineMat);
-            dashZ.position.set(0, 0.03, i);
-            cityGroup.add(dashZ);
-        }
-
-        // City Buildings
-        const buildingMat = new THREE.MeshStandardMaterial({ color: 0x222629, roughness: 0.4 });
-        const buildingPositions = [
-            [-50, -50], [-50, 50], [50, -50], [50, 50],
-            [-100, -50], [-100, 50], [100, -50], [100, 50],
-            [-50, -100], [50, -100], [-50, 100], [50, 100]
-        ];
-
-        buildingPositions.forEach(([x, z]) => {
-            const width = 30;
-            const height = 25 + Math.random() * 25;
-            const depth = 30;
-            const bGeo = new THREE.BoxGeometry(width, height, depth);
-            const building = new THREE.Mesh(bGeo, buildingMat);
-            building.position.set(x, height / 2, z);
-            cityGroup.add(building);
-        });
-
-        scene.add(cityGroup);
-
-
-        // --- DETAILED YELLOW PORSCHE WITH GLOWING BRAKE LIGHTS ---
-        const carGroup = new THREE.Group();
-
-        // Lower body chassis
-        const lowerGeo = new THREE.BoxGeometry(2.1, 0.4, 4.2);
-        const carMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.6, roughness: 0.2 });
-        const lowerBody = new THREE.Mesh(lowerGeo, carMat);
-        lowerBody.position.y = 0.35;
-        carGroup.add(lowerBody);
-
-        // Cabin
-        const cabinGeo = new THREE.BoxGeometry(1.7, 0.45, 2.0);
-        const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 });
-        const cabin = new THREE.Mesh(cabinGeo, glassMat);
-        cabin.position.set(0, 0.75, -0.2);
-        carGroup.add(cabin);
-
-        // Rear Spoiler
-        const spoilerGeo = new THREE.BoxGeometry(1.9, 0.1, 0.6);
-        const spoiler = new THREE.Mesh(spoilerGeo, carMat);
-        spoiler.position.set(0, 0.9, -1.8);
-        carGroup.add(spoiler);
-
-        // Headlights (White)
-        const lightGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
-        const whiteLightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        
-        const leftLight = new THREE.Mesh(lightGeo, whiteLightMat);
-        leftLight.position.set(-0.7, 0.4, 2.1);
-        carGroup.add(leftLight);
-
-        const rightLight = new THREE.Mesh(lightGeo, whiteLightMat);
-        rightLight.position.set(0.7, 0.4, 2.1);
-        carGroup.add(rightLight);
-
-        // Brake Lights (Red - glowing dynamic material)
-        const brakeLightMat = new THREE.MeshBasicMaterial({ color: 0x330000 }); // Dim when idle
-        const leftBrake = new THREE.Mesh(lightGeo, brakeLightMat);
-        leftBrake.position.set(-0.7, 0.4, -2.1);
-        carGroup.add(leftBrake);
-
-        const rightBrake = new THREE.Mesh(lightGeo, brakeLightMat);
-        rightBrake.position.set(0.7, 0.4, -2.1);
-        carGroup.add(rightBrake);
-
-        // Wheels
-        const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1b });
-        const wheels = [
-            [-1.1, 0.4, 1.4], [1.1, 0.4, 1.4],
-            [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]
-        ];
-        wheels.forEach(pos => {
-            const wheel = new THREE.Mesh(wheelGeo, wheel
+            dashZ.position.set(0,
