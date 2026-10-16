@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Driving - RONISH Gaming</title>
+    <title>City Driving - RONISH Gaming</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; }
         
-        /* Mobile Touch Controls Layout for Horizontal Mode */
         .controls-container {
             position: absolute;
             bottom: 15px;
@@ -17,7 +16,7 @@
             padding: 0 30px;
             box-sizing: border-box;
             z-index: 10;
-            pointer-events: none; /* Let clicks pass through empty space */
+            pointer-events: none;
         }
         .steering-group, .pedal-group {
             display: flex;
@@ -82,59 +81,106 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0b0b1a);
+        scene.background = new THREE.Color(0x050510); // Dark night city atmosphere
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambientLight);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-        dirLight.position.set(20, 40, 20);
+        
+        const dirLight = new THREE.DirectionalLight(0xffea79, 0.8); // Warm street lighting
+        dirLight.position.set(30, 50, 30);
         scene.add(dirLight);
 
-        // --- ROAD & ENVIRONMENT ---
-        const roadGroup = new THREE.Group();
-        const roadGeo = new THREE.PlaneGeometry(22, 1000);
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
-        const road = new THREE.Mesh(roadGeo, roadMat);
-        road.rotation.x = -Math.PI / 2;
-        roadGroup.add(road);
+        // --- CITY MAP BUILDER ---
+        const cityGroup = new THREE.Group();
 
-        for (let i = -450; i < 450; i += 15) {
-            const lineGeo = new THREE.BoxGeometry(0.4, 0.05, 5);
-            const lineMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
-            const line = new THREE.Mesh(lineGeo, lineMat);
-            line.position.set(0, 0.02, i);
-            roadGroup.add(line);
-        }
-        scene.add(roadGroup);
+        // Create intersecting roads (A grid layout)
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.9 });
+        
+        // Main horizontal and vertical cross roads
+        const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(300, 30), roadMat);
+        mainRoadX.rotation.x = -Math.PI / 2;
+        mainRoadX.position.y = 0.01;
+        cityGroup.add(mainRoadX);
 
-        // --- YELLOW PORSCHE MODEL ---
+        const mainRoadZ = new THREE.Mesh(new THREE.PlaneGeometry(30, 300), roadMat);
+        mainRoadZ.rotation.x = -Math.PI / 2;
+        mainRoadZ.position.y = 0.02;
+        cityGroup.add(mainRoadZ);
+
+        // Add City Buildings around the blocks
+        const buildingMat = new THREE.MeshStandardMaterial({ color: 0x222629, roughness: 0.4 });
+        const windowMat = new THREE.MeshBasicMaterial({ color: 0xffeaa7 }); // Glowing windows
+
+        const buildingPositions = [
+            [-50, -50], [-50, 50], [50, -50], [50, 50],
+            [-100, -50], [-100, 50], [100, -50], [100, 50],
+            [-50, -100], [50, -100], [-50, 100], [50, 100]
+        ];
+
+        buildingPositions.forEach(([x, z]) => {
+            const width = 30;
+            const height = 25 + Math.random() * 25; // Random skyscraper heights
+            const depth = 30;
+
+            const bGeo = new THREE.BoxGeometry(width, height, depth);
+            const building = new THREE.Mesh(bGeo, buildingMat);
+            building.position.set(x, height / 2, z);
+            cityGroup.add(building);
+        });
+
+        scene.add(cityGroup);
+
+
+        // --- DETAILED YELLOW PORSCHE MODEL ---
         const carGroup = new THREE.Group();
 
-        const lowerBodyGeo = new THREE.BoxGeometry(2.1, 0.5, 4.2);
-        const porscheMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.5, roughness: 0.2 });
-        const lowerBody = new THREE.Mesh(lowerBodyGeo, porscheMat);
-        lowerBody.position.y = 0.4;
+        // Lower body chassis
+        const lowerGeo = new THREE.BoxGeometry(2.1, 0.4, 4.2);
+        const carMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.6, roughness: 0.2 });
+        const lowerBody = new THREE.Mesh(lowerGeo, carMat);
+        lowerBody.position.y = 0.35;
         carGroup.add(lowerBody);
 
-        const cabinGeo = new THREE.BoxGeometry(1.7, 0.5, 2.0);
-        const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 });
-        const cabin = new THREE.Mesh(cabinGeo, cabinMat);
-        cabin.position.set(0, 0.85, -0.2);
+        // Upper cockpit cabin
+        const cabinGeo = new THREE.BoxGeometry(1.7, 0.45, 2.0);
+        const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 });
+        const cabin = new THREE.Mesh(cabinGeo, glassMat);
+        cabin.position.set(0, 0.75, -0.2);
         carGroup.add(cabin);
 
+        // Rear Spoiler (Wing)
+        const spoilerGeo = new THREE.BoxGeometry(1.9, 0.1, 0.6);
+        const spoiler = new THREE.Mesh(spoilerGeo, carMat);
+        spoiler.position.set(0, 0.9, -1.8);
+        carGroup.add(spoiler);
+
+        // Headlights
+        const lightGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
+        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        
+        const leftLight = new THREE.Mesh(lightGeo, lightMat);
+        leftLight.position.set(-0.7, 0.4, 2.1);
+        carGroup.add(leftLight);
+
+        const rightLight = new THREE.Mesh(lightGeo, lightMat);
+        rightLight.position.set(0.7, 0.4, 2.1);
+        carGroup.add(rightLight);
+
+        // Wheels
         const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        const wheelPositions = [
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1b });
+        
+        const wheels = [
             [-1.1, 0.4, 1.4], [1.1, 0.4, 1.4],
             [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]
         ];
-        wheelPositions.forEach(pos => {
+        wheels.forEach(pos => {
             const wheel = new THREE.Mesh(wheelGeo, wheelMat);
             wheel.rotation.z = Math.PI / 2;
             wheel.position.set(...pos);
@@ -143,10 +189,11 @@
 
         scene.add(carGroup);
 
+        // Camera setup
         camera.position.set(0, 4, -8);
         camera.lookAt(carGroup.position);
 
-        // Controls State
+        // Controls
         let speed = 0;
         let steering = 0;
         const keys = {};
@@ -182,9 +229,10 @@
             carGroup.rotation.y += steering * (speed * 1.5);
             carGroup.translateZ(speed);
 
-            // Update Speedometer UI
+            // Speedometer update
             document.getElementById('speedometer').innerText = `SPEED: ${Math.round(Math.abs(speed) * 120)} MPH`;
 
+            // Smooth chase camera follow
             const offset = new THREE.Vector3(0, 3.5, -7.5).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
             camera.position.copy(carGroup.position).add(offset);
             camera.lookAt(carGroup.position);
