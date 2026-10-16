@@ -7,6 +7,7 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; }
         
+        /* Layout for Touch Controls */
         .controls-container {
             position: absolute;
             bottom: 15px;
@@ -18,18 +19,26 @@
             z-index: 10;
             pointer-events: none;
         }
-        .steering-group, .pedal-group {
+        .steering-group {
             display: flex;
             gap: 20px;
             pointer-events: auto;
+            align-items: center;
+        }
+        .pedals-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+            align-items: flex-end;
         }
         .touch-btn {
-            width: 70px;
-            height: 70px;
+            width: 65px;
+            height: 65px;
             background: rgba(255, 215, 0, 0.15);
             border: 2px solid #FFD700;
             color: #FFD700;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: bold;
             border-radius: 50%;
             display: flex;
@@ -65,15 +74,19 @@
 
     <div id="speedometer">SPEED: 0 MPH</div>
 
-    <!-- Horizontal Mobile Touch Buttons -->
+    <!-- Custom Control Layout matching your drawing -->
     <div class="controls-container">
+        <!-- Left Side: Steering -->
         <div class="steering-group">
             <button class="touch-btn" id="leftBtn">◀</button>
             <button class="touch-btn" id="rightBtn">▶</button>
         </div>
-        <div class="pedal-group">
-            <button class="touch-btn" id="brakeBtn">S</button>
-            <button class="touch-btn" id="accelBtn">W</button>
+        
+        <!-- Right Side: Separate Accelerator (W), Reverse (S), and Brake (Space/Extra) -->
+        <div class="pedals-group">
+            <button class="touch-btn" id="accelBtn">▲</button>
+            <button class="touch-btn" id="brakeBtn" style="border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.15);">■</button>
+            <button class="touch-btn" id="reverseBtn">▼</button>
         </div>
     </div>
 
@@ -81,7 +94,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050510); // Dark night city atmosphere
+        scene.background = new THREE.Color(0x050510);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -92,17 +105,14 @@
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambientLight);
         
-        const dirLight = new THREE.DirectionalLight(0xffea79, 0.8); // Warm street lighting
+        const dirLight = new THREE.DirectionalLight(0xffea79, 0.8);
         dirLight.position.set(30, 50, 30);
         scene.add(dirLight);
 
         // --- CITY MAP BUILDER ---
         const cityGroup = new THREE.Group();
-
-        // Create intersecting roads (A grid layout)
         const roadMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.9 });
         
-        // Main horizontal and vertical cross roads
         const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(300, 30), roadMat);
         mainRoadX.rotation.x = -Math.PI / 2;
         mainRoadX.position.y = 0.01;
@@ -113,10 +123,7 @@
         mainRoadZ.position.y = 0.02;
         cityGroup.add(mainRoadZ);
 
-        // Add City Buildings around the blocks
         const buildingMat = new THREE.MeshStandardMaterial({ color: 0x222629, roughness: 0.4 });
-        const windowMat = new THREE.MeshBasicMaterial({ color: 0xffeaa7 }); // Glowing windows
-
         const buildingPositions = [
             [-50, -50], [-50, 50], [50, -50], [50, 50],
             [-100, -50], [-100, 50], [100, -50], [100, 50],
@@ -125,57 +132,60 @@
 
         buildingPositions.forEach(([x, z]) => {
             const width = 30;
-            const height = 25 + Math.random() * 25; // Random skyscraper heights
+            const height = 25 + Math.random() * 25;
             const depth = 30;
-
             const bGeo = new THREE.BoxGeometry(width, height, depth);
             const building = new THREE.Mesh(bGeo, buildingMat);
             building.position.set(x, height / 2, z);
             cityGroup.add(building);
         });
-
         scene.add(cityGroup);
 
-
-        // --- DETAILED YELLOW PORSCHE MODEL ---
+        // --- DETAILED YELLOW PORSCHE MODEL WITH BRAKE LIGHTS ---
         const carGroup = new THREE.Group();
 
-        // Lower body chassis
         const lowerGeo = new THREE.BoxGeometry(2.1, 0.4, 4.2);
         const carMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.6, roughness: 0.2 });
         const lowerBody = new THREE.Mesh(lowerGeo, carMat);
         lowerBody.position.y = 0.35;
         carGroup.add(lowerBody);
 
-        // Upper cockpit cabin
         const cabinGeo = new THREE.BoxGeometry(1.7, 0.45, 2.0);
         const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 });
         const cabin = new THREE.Mesh(cabinGeo, glassMat);
         cabin.position.set(0, 0.75, -0.2);
         carGroup.add(cabin);
 
-        // Rear Spoiler (Wing)
         const spoilerGeo = new THREE.BoxGeometry(1.9, 0.1, 0.6);
         const spoiler = new THREE.Mesh(spoilerGeo, carMat);
         spoiler.position.set(0, 0.9, -1.8);
         carGroup.add(spoiler);
 
         // Headlights
-        const lightGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
-        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        
-        const leftLight = new THREE.Mesh(lightGeo, lightMat);
-        leftLight.position.set(-0.7, 0.4, 2.1);
-        carGroup.add(leftLight);
+        const headLightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const leftHeadLight = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.1), headLightMat);
+        leftHeadLight.position.set(-0.7, 0.4, 2.1);
+        carGroup.add(leftHeadLight);
+        const rightHeadLight = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.1), headLightMat);
+        rightHeadLight.position.set(0.7, 0.4, 2.1);
+        carGroup.add(rightHeadLight);
 
-        const rightLight = new THREE.Mesh(lightGeo, lightMat);
-        rightLight.position.set(0.7, 0.4, 2.1);
-        carGroup.add(rightLight);
+        // ** Glowing Rear Brake Lights **
+        const brakeLightMatOff = new THREE.MeshBasicMaterial({ color: 0x550000 }); // Dim dark red when not braking
+        const brakeLightMatOn = new THREE.MeshBasicMaterial({ color: 0xff0000 });   // Bright glowing red when braking
+        
+        const brakeGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
+        const leftBrakeLight = new THREE.Mesh(brakeGeo, brakeLightMatOff);
+        leftBrakeLight.position.set(-0.7, 0.4, -2.1);
+        carGroup.add(leftBrakeLight);
+
+        const rightBrakeLight = new THREE.Mesh(brakeGeo, brakeLightMatOff);
+        rightBrakeLight.position.set(0.7, 0.4, -2.1);
+        carGroup.add(rightBrakeLight);
 
         // Wheels
         const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1b });
-        
         const wheels = [
             [-1.1, 0.4, 1.4], [1.1, 0.4, 1.4],
             [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]
@@ -189,11 +199,10 @@
 
         scene.add(carGroup);
 
-        // Camera setup
         camera.position.set(0, 4, -8);
         camera.lookAt(carGroup.position);
 
-        // Controls
+        // Controls State
         let speed = 0;
         let steering = 0;
         const keys = {};
@@ -211,42 +220,26 @@
 
         bindTouch('leftBtn', 'a');
         bindTouch('rightBtn', 'd');
-        bindTouch('accelBtn', 'w');
-        bindTouch('brakeBtn', 's');
+        bindTouch('accelBtn', 'w');      // Accelerate Up
+        bindTouch('reverseBtn', 's');   // Reverse Down
+        bindTouch('brakeBtn', ' ');     // Brake Button (Spacebar / Red Square)
 
         // Game Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            if (keys['w'] || keys['arrowup']) speed = Math.min(speed + 0.025, 0.9);
-            else if (keys['s'] || keys['arrowdown']) speed = Math.max(speed - 0.025, -0.3);
-            else speed *= 0.95;
+            let isBraking = false;
 
-            if (keys['a'] || keys['arrowleft']) steering = 0.045;
-            else if (keys['d'] || keys['arrowright']) steering = -0.045;
-            else steering = 0;
+            // Separate controls logic
+            if (keys['w']) {
+                speed = Math.min(speed + 0.025, 0.9);
+            } else if (keys['s']) {
+                speed = Math.max(speed - 0.025, -0.3); // Reverse
+            } else if (keys[' ']) { // Brake button pressed
+                speed *= 0.85; // Hard braking slowdown
+                isBraking = true;
+            } else {
+                speed *= 0.96; // Natural coasting friction
+            }
 
-            carGroup.rotation.y += steering * (speed * 1.5);
-            carGroup.translateZ(speed);
-
-            // Speedometer update
-            document.getElementById('speedometer').innerText = `SPEED: ${Math.round(Math.abs(speed) * 120)} MPH`;
-
-            // Smooth chase camera follow
-            const offset = new THREE.Vector3(0, 3.5, -7.5).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
-            camera.position.copy(carGroup.position).add(offset);
-            camera.lookAt(carGroup.position);
-
-            renderer.render(scene, camera);
-        }
-
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
-</body>
-</html>
+            //
