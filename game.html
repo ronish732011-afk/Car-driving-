@@ -2,36 +2,85 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Driving - RONISH Gaming</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; }
+        body { margin: 0; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; }
         #instructions {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 10px;
+            left: 10px;
+            right: 10px;
             color: #FFD700;
             background: rgba(0,0,0,0.8);
-            padding: 15px;
+            padding: 10px;
             border-radius: 8px;
             font-family: 'Segoe UI', sans-serif;
+            font-size: 0.85rem;
             border: 1px solid #FFD700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+            text-align: center;
+            z-index: 10;
+        }
+        /* On-Screen Mobile Touch Controls */
+        .controls-container {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        .steering-group, .pedal-group {
+            display: flex;
+            gap: 15px;
+        }
+        .touch-btn {
+            width: 75px;
+            height: 75px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #FFD700;
+            color: #FFD700;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            outline: none;
+            backdrop-filter: blur(5px);
+            -webkit-tap-highlight-color: transparent;
+        }
+        .touch-btn:active {
+            background: rgba(255, 215, 0, 0.6);
+            transform: scale(0.95);
         }
     </style>
 </head>
 <body>
     <div id="instructions">
-        <h3>RONISH Gaming - Highway Cruise</h3>
-        <p>Use <b>W / S</b> or <b>Up / Down</b> to Accelerate & Brake</p>
-        <p>Use <b>A / D</b> or <b>Left / Right</b> to Steer</p>
+        <b>RONISH Gaming</b> - Use on-screen buttons or keyboard!
+    </div>
+
+    <!-- Mobile Touch UI Buttons -->
+    <div class="controls-container">
+        <div class="steering-group">
+            <button class="touch-btn" id="leftBtn">◀</button>
+            <button class="touch-btn" id="rightBtn">▶</button>
+        </div>
+        <div class="pedal-group">
+            <button class="touch-btn" id="brakeBtn">S</button>
+            <button class="touch-btn" id="accelBtn">W</button>
+        </div>
     </div>
 
     <!-- Include Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0b0b1a); // Deep twilight sky
+        scene.background = new THREE.Color(0x0b0b1a);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -47,15 +96,12 @@
 
         // --- ROAD & ENVIRONMENT ---
         const roadGroup = new THREE.Group();
-        
-        // Asphalt Road
         const roadGeo = new THREE.PlaneGeometry(22, 1000);
         const roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
         const road = new THREE.Mesh(roadGeo, roadMat);
         road.rotation.x = -Math.PI / 2;
         roadGroup.add(road);
 
-        // Center dashed lines
         for (let i = -450; i < 450; i += 15) {
             const lineGeo = new THREE.BoxGeometry(0.4, 0.05, 5);
             const lineMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
@@ -65,35 +111,27 @@
         }
         scene.add(roadGroup);
 
-
         // --- REALISTIC YELLOW PORSCHE MODEL ---
         const carGroup = new THREE.Group();
 
-        // Main Lower Body (Wedge shape)
         const lowerBodyGeo = new THREE.BoxGeometry(2.1, 0.5, 4.2);
         const porscheMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.5, roughness: 0.2 });
         const lowerBody = new THREE.Mesh(lowerBodyGeo, porscheMat);
         lowerBody.position.y = 0.4;
         carGroup.add(lowerBody);
 
-        // Cabin / Roof (Cockpit)
         const cabinGeo = new THREE.BoxGeometry(1.7, 0.5, 2.0);
-        const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 }); // Tinted glass look
+        const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 });
         const cabin = new THREE.Mesh(cabinGeo, cabinMat);
         cabin.position.set(0, 0.85, -0.2);
         carGroup.add(cabin);
 
-        // Wheels (4 wheels)
         const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
-        
         const wheelPositions = [
-            [-1.1, 0.4, 1.4],   // Front Left
-            [1.1, 0.4, 1.4],    // Front Right
-            [-1.1, 0.4, -1.4],  // Back Left
-            [1.1, 0.4, -1.4]    // Back Right
+            [-1.1, 0.4, 1.4], [1.1, 0.4, 1.4],
+            [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]
         ];
-
         wheelPositions.forEach(pos => {
             const wheel = new THREE.Mesh(wheelGeo, wheelMat);
             wheel.rotation.z = Math.PI / 2;
@@ -103,26 +141,39 @@
 
         scene.add(carGroup);
 
-        // Camera setup
         camera.position.set(0, 4, -8);
         camera.lookAt(carGroup.position);
 
-        // Controls
+        // Controls State
         let speed = 0;
         let steering = 0;
         const keys = {};
 
+        // Keyboard Event Listeners
         window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+        // Mobile Touch Button Listeners
+        function bindTouch(id, keyName) {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
+            btn.addEventListener('mousedown', () => keys[keyName] = true);
+            btn.addEventListener('mouseup', () => keys[keyName] = false);
+        }
+
+        bindTouch('leftBtn', 'a');
+        bindTouch('rightBtn', 'd');
+        bindTouch('accelBtn', 'w');
+        bindTouch('brakeBtn', 's');
 
         // Game Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // Driving physics
             if (keys['w'] || keys['arrowup']) speed = Math.min(speed + 0.025, 0.9);
             else if (keys['s'] || keys['arrowdown']) speed = Math.max(speed - 0.025, -0.3);
-            else speed *= 0.95; // Friction
+            else speed *= 0.95;
 
             if (keys['a'] || keys['arrowleft']) steering = 0.045;
             else if (keys['d'] || keys['arrowright']) steering = -0.045;
@@ -131,7 +182,6 @@
             carGroup.rotation.y += steering * (speed * 1.5);
             carGroup.translateZ(speed);
 
-            // Smooth chase camera
             const offset = new THREE.Vector3(0, 3.5, -7.5).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
             camera.position.copy(carGroup.position).add(offset);
             camera.lookAt(carGroup.position);
