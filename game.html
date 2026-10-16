@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driving - RONISH Gaming</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        #instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #FFD700;
+            background: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Segoe UI', sans-serif;
+            border: 1px solid #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div id="instructions">
+        <h3>RONISH Gaming - City Drive</h3>
+        <p>Use <b>W / S</b> or <b>Up / Down Arrows</b> to Accelerate & Brake</p>
+        <p>Use <b>A / D</b> or <b>Left / Right Arrows</b> to Steer</p>
+    </div>
+
+    <!-- Include Three.js library from online CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Basic Three.js setup for a driving simulation view
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x111122); // Night sky vibe
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 20, 10);
+        scene.add(directionalLight);
+
+        // Create a long asphalt road
+        const roadGeometry = new THREE.PlaneGeometry(20, 500);
+        const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+        const road = new THREE.Mesh(roadGeometry, roadMaterial);
+        road.rotation.x = -Math.PI / 2;
+        scene.add(road);
+
+        // Create the Yellow Porsche (represented as a sleek yellow box/car body for now)
+        const carGroup = new THREE.Group();
+        
+        const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
+        const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xFFD700, roughness: 0.3 });
+        const carBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        carBody.position.y = 0.5;
+        carGroup.add(carBody);
+
+        scene.add(carGroup);
+
+        // Camera positioning behind the car
+        camera.position.set(0, 4, -8);
+        camera.lookAt(carGroup.position);
+
+        // Controls variables
+        let speed = 0;
+        let steering = 0;
+        const keys = {};
+
+        window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+        // Game loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Acceleration & Braking
+            if (keys['w'] || keys['arrowup']) speed = Math.min(speed + 0.02, 0.8);
+            else if (keys['s'] || keys['arrowdown']) speed = Math.max(speed - 0.02, -0.3);
+            else speed *= 0.95; // Natural friction slowdown
+
+            // Steering
+            if (keys['a'] || keys['arrowleft']) steering = 0.04;
+            else if (keys['d'] || keys['arrowright']) steering = -0.04;
+            else steering = 0;
+
+            // Move car forward and rotate
+            carGroup.rotation.y += steering * (speed * 2);
+            carGroup.translateZ(speed);
+
+            // Keep camera locked behind the car smoothly
+            const offset = new THREE.Vector3(0, 3, -7).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
+            camera.position.copy(carGroup.position).add(offset);
+            camera.lookAt(carGroup.position);
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
