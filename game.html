@@ -27,7 +27,7 @@
         .pedals-group {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
             pointer-events: auto;
             align-items: flex-end;
         }
@@ -57,13 +57,13 @@
 
         .pedal-btn {
             width: 65px;
-            height: 50px;
+            height: 42px;
             background: rgba(255, 215, 0, 0.2);
             border: 2px solid #FFD700;
             color: #FFD700;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 6px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -79,10 +79,15 @@
             transform: scale(0.95);
         }
 
-        #speedometer {
+        #hud {
             position: absolute;
             top: 15px;
             right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+        .hud-box {
             color: #FFD700;
             background: rgba(0,0,0,0.7);
             padding: 8px 15px;
@@ -90,15 +95,18 @@
             font-family: 'Segoe UI', sans-serif;
             font-weight: bold;
             border: 1px solid #FFD700;
-            font-size: 1rem;
-            z-index: 10;
+            font-size: 0.95rem;
         }
     </style>
 </head>
 <body>
 
-    <div id="speedometer">SPEED: 0 MPH</div>
+    <div id="hud">
+        <div class="hud-box" id="timeDisplay">TIME: DAY</div>
+        <div class="hud-box" id="speedometer">SPEED: 0 MPH</div>
+    </div>
 
+    <!-- Controls with Gas, Brake, and Rev Pedals -->
     <div class="controls-container">
         <div class="steering-group">
             <button class="steer-btn" id="leftBtn">◀</button>
@@ -107,6 +115,7 @@
         <div class="pedals-group">
             <button class="pedal-btn" id="accelBtn">GAS</button>
             <button class="pedal-btn" id="brakeBtn">BRAKE</button>
+            <button class="pedal-btn" id="revBtn">REV</button>
         </div>
     </div>
 
@@ -114,79 +123,107 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050510);
+        scene.background = new THREE.Color(0x70b5ff);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Lights
+        // Lighting
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
         
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        dirLight.position.set(20, 40, 20);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(40, 80, 40);
         scene.add(dirLight);
 
-        // --- CITY ROAD MAP ---
+        // --- CITY ROAD MAP & ROADSIDE TREES ---
         const roadMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.9 });
-        const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(300, 30), roadMat);
+        const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(400, 32), roadMat);
         mainRoadX.rotation.x = -Math.PI / 2;
         mainRoadX.position.y = 0.01;
         scene.add(mainRoadX);
 
-        const mainRoadZ = new THREE.Mesh(new THREE.PlaneGeometry(30, 300), roadMat);
+        const mainRoadZ = new THREE.Mesh(new THREE.PlaneGeometry(32, 400), roadMat);
         mainRoadZ.rotation.x = -Math.PI / 2;
         mainRoadZ.position.y = 0.02;
         scene.add(mainRoadZ);
 
         // White Road Stripes
         const whiteLineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        for (let i = -140; i < 140; i += 12) {
-            const dashX = new THREE.Mesh(new THREE.BoxGeometry(4, 0.04, 0.3), whiteLineMat);
+        for (let i = -190; i < 190; i += 15) {
+            const dashX = new THREE.Mesh(new THREE.BoxGeometry(5, 0.04, 0.3), whiteLineMat);
             dashX.position.set(i, 0.03, 0);
             scene.add(dashX);
 
-            const dashZ = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 4), whiteLineMat);
+            const dashZ = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 5), whiteLineMat);
             dashZ.position.set(0, 0.03, i);
             scene.add(dashZ);
+        }
+
+        // Roadside Trees Generator
+        const treeLeafMat = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, roughness: 0.6 });
+        const treeBarkMat = new THREE.MeshStandardMaterial({ color: 0x6f4e37, roughness: 0.8 });
+
+        function createTree(x, z) {
+            const treeGroup = new THREE.Group();
+            // Trunk
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 2, 8), treeBarkMat);
+            trunk.position.y = 1;
+            treeGroup.add(trunk);
+            // Leaves
+            const leaves = new THREE.Mesh(new THREE.ConeGeometry(1.5, 3, 8), treeLeafMat);
+            leaves.position.y = 3;
+            treeGroup.add(leaves);
+
+            treeGroup.position.set(x, 0, z);
+            scene.add(treeGroup);
+        }
+
+        // Place trees along the road borders
+        for (let p = -180; p <= 180; p += 25) {
+            if (Math.abs(p) > 25) {
+                createTree(18, p);
+                createTree(-18, p);
+                createTree(p, 18);
+                createTree(p, -18);
+            }
         }
 
         // Buildings
         const buildingMat = new THREE.MeshStandardMaterial({ color: 0x222629 });
         const buildingPositions = [
-            [-50, -50], [-50, 50], [50, -50], [50, 50],
-            [-100, -50], [-100, 50], [100, -50], [100, 50]
+            [-60, -60], [-60, 60], [60, -60], [60, 60],
+            [-120, -60], [-120, 60], [120, -60], [120, 60],
+            [-60, -120], [60, -120], [-60, 120], [60, 120]
         ];
         buildingPositions.forEach(([x, z]) => {
-            const h = 30;
-            const b = new THREE.Mesh(new THREE.BoxGeometry(25, h, 25), buildingMat);
+            const h = 35;
+            const b = new THREE.Mesh(new THREE.BoxGeometry(28, h, 28), buildingMat);
             b.position.set(x, h/2, z);
             scene.add(b);
         });
 
 
-        // --- GUARANTEED VISIBLE YELLOW PORSCHE ---
+        // --- PLAYER YELLOW PORSCHE WITH AUTO HEADLIGHTS ---
         const carGroup = new THREE.Group();
 
-        // 1. Car Body (Bright Yellow, large dimensions so it's impossible to miss)
         const bodyGeo = new THREE.BoxGeometry(2.2, 0.8, 4.5);
         const bodyMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, roughness: 0.2 });
         const carBody = new THREE.Mesh(bodyGeo, bodyMat);
-        carBody.position.y = 0.6; // Clearly above road
+        carBody.position.y = 0.6;
         carGroup.add(carBody);
 
-        // 2. Cabin Roof
         const cabinGeo = new THREE.BoxGeometry(1.6, 0.7, 2.2);
         const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
         const cabin = new THREE.Mesh(cabinGeo, cabinMat);
         cabin.position.set(0, 1.3, -0.2);
         carGroup.add(cabin);
 
-        // 3. Headlights (Front)
+        // Headlight Meshes & Spotlights (Auto turn on at night)
         const headLightGeo = new THREE.BoxGeometry(0.4, 0.2, 0.1);
-        const headLightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const headLightMat = new THREE.MeshBasicMaterial({ color: 0x333333 }); // Off by default in day
         
         const leftHead = new THREE.Mesh(headLightGeo, headLightMat);
         leftHead.position.set(-0.7, 0.6, 2.3);
@@ -196,7 +233,14 @@
         rightHead.position.set(0.7, 0.6, 2.3);
         carGroup.add(rightHead);
 
-        // 4. Brake Lights (Back - dynamic glow)
+        // Real illuminating spotlights attached to car for night driving
+        const carSpotLight = new THREE.SpotLight(0xffffff, 0, 50, Math.PI / 4, 0.5, 2);
+        carSpotLight.position.set(0, 1, 2.3);
+        carSpotLight.target.position.set(0, 0, 10);
+        carGroup.add(carSpotLight);
+        carGroup.add(carSpotLight.target);
+
+        // Brake Lights
         const brakeLightMat = new THREE.MeshBasicMaterial({ color: 0x330000 });
         const leftBrake = new THREE.Mesh(headLightGeo, brakeLightMat);
         leftBrake.position.set(-0.7, 0.6, -2.3);
@@ -206,7 +250,7 @@
         rightBrake.position.set(0.7, 0.6, -2.3);
         carGroup.add(rightBrake);
 
-        // 5. Wheels
+        // Wheels
         const wheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.35, 16);
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
         const wheelCoords = [
@@ -222,11 +266,37 @@
 
         scene.add(carGroup);
 
-        // Camera setup positioned directly behind the car
+
+        // --- AI TRAFFIC CARS ---
+        const trafficCars = [];
+        const trafficColors = [0xffffff, 0xef233c, 0x2b2d42, 0x3a86ff, 0x38b000];
+
+        for (let i = 0; i < 6; i++) {
+            const tGroup = new THREE.Group();
+            const color = trafficColors[Math.floor(Math.random() * trafficColors.length)];
+            const tBody = new THREE.Mesh(
+                new THREE.BoxGeometry(2.1, 0.7, 4.2),
+                new THREE.MeshStandardMaterial({ color: color, roughness: 0.3 })
+            );
+            tBody.position.y = 0.55;
+            tGroup.add(tBody);
+
+            tGroup.position.set((Math.random() - 0.5) * 200, 0, (Math.random() - 0.5) * 200);
+            scene.add(tGroup);
+            
+            trafficCars.push({
+                mesh: tGroup,
+                speed: 0.3 + Math.random() * 0.3,
+                direction: Math.random() > 0.5 ? 'x' : 'z'
+            });
+        }
+
+
+        // Camera setup
         camera.position.set(0, 4, -9);
         camera.lookAt(carGroup.position);
 
-        // Controls
+        // Controls & Game State
         let speed = 0;
         let steering = 0;
         const keys = {};
@@ -246,10 +316,38 @@
         bindTouch('rightBtn', 'd');
         bindTouch('accelBtn', 'w');
         bindTouch('brakeBtn', 's');
+        bindTouch('revBtn', 'r'); // Bind Rev/Reverse pedal
+
+        let gameTimeSeconds = 0;
 
         // Game Loop
         function animate() {
             requestAnimationFrame(animate);
+
+            // Day & Night Cycle (10 minutes total loop: 5 mins Day, 5 mins Night)
+            gameTimeSeconds += 0.016;
+            const cycleProgress = (gameTimeSeconds % 600) / 600;
+            const isNight = cycleProgress >= 0.5;
+            
+            document.getElementById('timeDisplay').innerText = isNight ? "TIME: NIGHT" : "TIME: DAY";
+
+            if (isNight) {
+                scene.background.setHex(0x050510);
+                dirLight.color.setHex(0x4466aa);
+                dirLight.intensity = 0.2;
+                ambientLight.intensity = 0.2;
+                // Turn headlights ON automatically at night
+                headLightMat.color.setHex(0xffffff);
+                carSpotLight.intensity = 3.0;
+            } else {
+                scene.background.setHex(0x70b5ff);
+                dirLight.color.setHex(0xffffff);
+                dirLight.intensity = 1.2;
+                ambientLight.intensity = 0.8;
+                // Turn headlights OFF during the day
+                headLightMat.color.setHex(0x333333);
+                carSpotLight.intensity = 0;
+            }
 
             let isBraking = false;
 
@@ -258,10 +356,13 @@
             } else if (keys['s'] || keys['arrowdown']) {
                 if (speed > 0.02) {
                     speed = Math.max(speed - 0.04, 0);
-                    isBraking = true; // Trigger brake lights
+                    isBraking = true; // Brake lights glow
                 } else {
                     speed = Math.max(speed - 0.02, -0.3);
                 }
+            } else if (keys['r']) {
+                // Reverse pedal action
+                speed = Math.max(speed - 0.02, -0.4);
             } else {
                 speed *= 0.95;
             }
@@ -280,10 +381,22 @@
             carGroup.rotation.y += steering * (speed * 1.5);
             carGroup.translateZ(speed);
 
-            // Update Speedometer UI
+            // Move Traffic AI Cars
+            trafficCars.forEach(car => {
+                if (car.direction === 'x') {
+                    car.mesh.position.x += car.speed;
+                    car.mesh.rotation.y = car.speed > 0 ? 0 : Math.PI;
+                    if (car.mesh.position.x > 200) car.mesh.position.x = -200;
+                } else {
+                    car.mesh.position.z += car.speed;
+                    car.mesh.rotation.y = car.speed > 0 ? Math.PI / 2 : -Math.PI / 2;
+                    if (car.mesh.position.z > 200) car.mesh.position.z = -200;
+                }
+            });
+
             document.getElementById('speedometer').innerText = `SPEED: ${Math.round(Math.abs(speed) * 120)} MPH`;
 
-            // Lock camera smoothly behind moving car
+            // Camera follow
             const offset = new THREE.Vector3(0, 3.5, -8).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
             camera.position.copy(carGroup.position).add(offset);
             camera.lookAt(carGroup.position);
