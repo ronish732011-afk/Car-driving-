@@ -11,63 +11,103 @@
             top: 20px;
             left: 20px;
             color: #FFD700;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             padding: 15px;
             border-radius: 8px;
             font-family: 'Segoe UI', sans-serif;
             border: 1px solid #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
         }
     </style>
 </head>
 <body>
     <div id="instructions">
-        <h3>RONISH Gaming - City Drive</h3>
-        <p>Use <b>W / S</b> or <b>Up / Down Arrows</b> to Accelerate & Brake</p>
-        <p>Use <b>A / D</b> or <b>Left / Right Arrows</b> to Steer</p>
+        <h3>RONISH Gaming - Highway Cruise</h3>
+        <p>Use <b>W / S</b> or <b>Up / Down</b> to Accelerate & Brake</p>
+        <p>Use <b>A / D</b> or <b>Left / Right</b> to Steer</p>
     </div>
 
-    <!-- Include Three.js library from online CDN -->
+    <!-- Include Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Basic Three.js setup for a driving simulation view
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x111122); // Night sky vibe
+        scene.background = new THREE.Color(0x0b0b1a); // Deep twilight sky
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Add lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(10, 20, 10);
-        scene.add(directionalLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+        dirLight.position.set(20, 40, 20);
+        scene.add(dirLight);
 
-        // Create a long asphalt road
-        const roadGeometry = new THREE.PlaneGeometry(20, 500);
-        const roadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
-        const road = new THREE.Mesh(roadGeometry, roadMaterial);
-        road.rotation.x = -Math.PI / 2;
-        scene.add(road);
-
-        // Create the Yellow Porsche (represented as a sleek yellow box/car body for now)
-        const carGroup = new THREE.Group();
+        // --- ROAD & ENVIRONMENT ---
+        const roadGroup = new THREE.Group();
         
-        const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
-        const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xFFD700, roughness: 0.3 });
-        const carBody = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        carBody.position.y = 0.5;
-        carGroup.add(carBody);
+        // Asphalt Road
+        const roadGeo = new THREE.PlaneGeometry(22, 1000);
+        const roadMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
+        const road = new THREE.Mesh(roadGeo, roadMat);
+        road.rotation.x = -Math.PI / 2;
+        roadGroup.add(road);
+
+        // Center dashed lines
+        for (let i = -450; i < 450; i += 15) {
+            const lineGeo = new THREE.BoxGeometry(0.4, 0.05, 5);
+            const lineMat = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+            const line = new THREE.Mesh(lineGeo, lineMat);
+            line.position.set(0, 0.02, i);
+            roadGroup.add(line);
+        }
+        scene.add(roadGroup);
+
+
+        // --- REALISTIC YELLOW PORSCHE MODEL ---
+        const carGroup = new THREE.Group();
+
+        // Main Lower Body (Wedge shape)
+        const lowerBodyGeo = new THREE.BoxGeometry(2.1, 0.5, 4.2);
+        const porscheMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.5, roughness: 0.2 });
+        const lowerBody = new THREE.Mesh(lowerBodyGeo, porscheMat);
+        lowerBody.position.y = 0.4;
+        carGroup.add(lowerBody);
+
+        // Cabin / Roof (Cockpit)
+        const cabinGeo = new THREE.BoxGeometry(1.7, 0.5, 2.0);
+        const cabinMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 }); // Tinted glass look
+        const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+        cabin.position.set(0, 0.85, -0.2);
+        carGroup.add(cabin);
+
+        // Wheels (4 wheels)
+        const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+        
+        const wheelPositions = [
+            [-1.1, 0.4, 1.4],   // Front Left
+            [1.1, 0.4, 1.4],    // Front Right
+            [-1.1, 0.4, -1.4],  // Back Left
+            [1.1, 0.4, -1.4]    // Back Right
+        ];
+
+        wheelPositions.forEach(pos => {
+            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            wheel.rotation.z = Math.PI / 2;
+            wheel.position.set(...pos);
+            carGroup.add(wheel);
+        });
 
         scene.add(carGroup);
 
-        // Camera positioning behind the car
+        // Camera setup
         camera.position.set(0, 4, -8);
         camera.lookAt(carGroup.position);
 
-        // Controls variables
+        // Controls
         let speed = 0;
         let steering = 0;
         const keys = {};
@@ -75,26 +115,24 @@
         window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
 
-        // Game loop
+        // Game Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // Acceleration & Braking
-            if (keys['w'] || keys['arrowup']) speed = Math.min(speed + 0.02, 0.8);
-            else if (keys['s'] || keys['arrowdown']) speed = Math.max(speed - 0.02, -0.3);
-            else speed *= 0.95; // Natural friction slowdown
+            // Driving physics
+            if (keys['w'] || keys['arrowup']) speed = Math.min(speed + 0.025, 0.9);
+            else if (keys['s'] || keys['arrowdown']) speed = Math.max(speed - 0.025, -0.3);
+            else speed *= 0.95; // Friction
 
-            // Steering
-            if (keys['a'] || keys['arrowleft']) steering = 0.04;
-            else if (keys['d'] || keys['arrowright']) steering = -0.04;
+            if (keys['a'] || keys['arrowleft']) steering = 0.045;
+            else if (keys['d'] || keys['arrowright']) steering = -0.045;
             else steering = 0;
 
-            // Move car forward and rotate
-            carGroup.rotation.y += steering * (speed * 2);
+            carGroup.rotation.y += steering * (speed * 1.5);
             carGroup.translateZ(speed);
 
-            // Keep camera locked behind the car smoothly
-            const offset = new THREE.Vector3(0, 3, -7).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
+            // Smooth chase camera
+            const offset = new THREE.Vector3(0, 3.5, -7.5).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
             camera.position.copy(carGroup.position).add(offset);
             camera.lookAt(carGroup.position);
 
@@ -103,7 +141,6 @@
 
         animate();
 
-        // Handle window resizing
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
