@@ -24,14 +24,29 @@
             align-items: center;
         }
 
-        .logo-img {
-            max-width: 320px;
-            width: 80vw;
-            height: auto;
+        /* Stylish Gaming Font Text */
+        .logo-text {
+            color: #FFD700;
+            font-size: 3.5rem;
+            font-weight: 950;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 
+                         0 0 20px rgba(255, 215, 0, 0.5), 
+                         0 0 40px rgba(255, 215, 0, 0.3);
             opacity: 0;
-            transform: scale(0.6);
+            transform: scale(0.5);
             animation: epicZoomIn 1.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+        }
+
+        .logo-subtext {
+            color: #ffffff;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            margin-top: 8px;
+            opacity: 0;
+            animation: fadeIn 1s ease 0.8s forwards;
         }
 
         .loading-bar-container {
@@ -56,11 +71,13 @@
         @keyframes epicZoomIn {
             0% {
                 opacity: 0;
-                transform: scale(0.6);
+                transform: scale(0.5);
+                letter-spacing: 20px;
             }
             100% {
                 opacity: 1;
                 transform: scale(1);
+                letter-spacing: 5px;
             }
         }
 
@@ -76,8 +93,9 @@
 <body>
 
     <div class="logo-container">
-        <!-- Loads your custom logo image -->
-        <img src="logo.png" alt="RONISH Gaming Logo" class="logo-img">
+        <!-- Stylish Font Text Logo -->
+        <div class="logo-text">RONISH Gaming</div>
+        <div class="logo-subtext">Extreme Drive</div>
         
         <div class="loading-bar-container">
             <div class="loading-bar"></div>
