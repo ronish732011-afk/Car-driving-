@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garage - RONISH Gaming</title>
+    <style>
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #111111, #1b1b1b);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        h1 {
+            color: #FFD700;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+        .car-card {
+            background: #222;
+            border: 2px solid #FFD700;
+            padding: 20px 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+            margin-bottom: 30px;
+        }
+        .car-card h2 {
+            color: #FFD700;
+            margin: 0 0 10px 0;
+        }
+        .play-btn {
+            background-color: #FFD700;
+            color: #000;
+            border: none;
+            padding: 15px 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+        .play-btn:hover {
+            background-color: #ffc400;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>RONISH Gaming</h1>
+    <div class="subtitle">Select Your Ride</div>
+
+    <div class="car-card">
+        <h2>Yellow Porsche</h2>
+        <p>Top Speed: High | Handling: Smooth</p>
+    </div>
+
+    <button class="play-btn" onclick="startGame()">Play</button>
+
+    <script>
+        function startGame() {
+            window.location.href = "game.html";
+        }
+    </script>
+</body>
+</html>
