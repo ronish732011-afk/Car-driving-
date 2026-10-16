@@ -7,14 +7,14 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; }
         
-        /* Layout for Touch Controls */
+        /* On-Screen Mobile Layout matching your sketch */
         .controls-container {
             position: absolute;
-            bottom: 15px;
+            bottom: 20px;
             width: 100%;
             display: flex;
             justify-content: space-between;
-            padding: 0 30px;
+            padding: 0 35px;
             box-sizing: border-box;
             z-index: 10;
             pointer-events: none;
@@ -23,22 +23,24 @@
             display: flex;
             gap: 20px;
             pointer-events: auto;
-            align-items: center;
+            align-self: flex-end;
         }
         .pedals-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             pointer-events: auto;
             align-items: flex-end;
         }
-        .touch-btn {
-            width: 65px;
-            height: 65px;
+        
+        /* Steering Buttons (Round) */
+        .steer-btn {
+            width: 75px;
+            height: 75px;
             background: rgba(255, 215, 0, 0.15);
             border: 2px solid #FFD700;
             color: #FFD700;
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: bold;
             border-radius: 50%;
             display: flex;
@@ -50,10 +52,36 @@
             -webkit-tap-highlight-color: transparent;
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
         }
-        .touch-btn:active {
+        .steer-btn:active {
             background: rgba(255, 215, 0, 0.5);
             transform: scale(0.92);
         }
+
+        /* Vertical Pedals matching your sketch layout */
+        .pedal-btn {
+            width: 65px;
+            height: 50px;
+            background: rgba(255, 215, 0, 0.15);
+            border: 2px solid #FFD700;
+            color: #FFD700;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            outline: none;
+            backdrop-filter: blur(4px);
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+            text-transform: uppercase;
+        }
+        .pedal-btn:active {
+            background: rgba(255, 215, 0, 0.5);
+            transform: scale(0.95);
+        }
+
         #speedometer {
             position: absolute;
             top: 15px;
@@ -74,19 +102,17 @@
 
     <div id="speedometer">SPEED: 0 MPH</div>
 
-    <!-- Custom Control Layout matching your drawing -->
+    <!-- Controls matching your sketch layout -->
     <div class="controls-container">
-        <!-- Left Side: Steering -->
+        <!-- Left side: Steering (Left / Right) -->
         <div class="steering-group">
-            <button class="touch-btn" id="leftBtn">◀</button>
-            <button class="touch-btn" id="rightBtn">▶</button>
+            <button class="steer-btn" id="leftBtn">◀</button>
+            <button class="steer-btn" id="rightBtn">▶</button>
         </div>
-        
-        <!-- Right Side: Separate Accelerator (W), Reverse (S), and Brake (Space/Extra) -->
+        <!-- Right side: Vertical pedals (Accelerator on top, Brake/Reverse below) -->
         <div class="pedals-group">
-            <button class="touch-btn" id="accelBtn">▲</button>
-            <button class="touch-btn" id="brakeBtn" style="border-color: #ff4757; color: #ff4757; background: rgba(255, 71, 87, 0.15);">■</button>
-            <button class="touch-btn" id="reverseBtn">▼</button>
+            <button class="pedal-btn" id="accelBtn">GAS</button>
+            <button class="pedal-btn" id="brakeBtn">BRAKE</button>
         </div>
     </div>
 
@@ -109,20 +135,38 @@
         dirLight.position.set(30, 50, 30);
         scene.add(dirLight);
 
-        // --- CITY MAP BUILDER ---
+        // --- REALISTIC ROAD MAP (White Center Lines & White Side Lines) ---
         const cityGroup = new THREE.Group();
         const roadMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.9 });
         
-        const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(300, 30), roadMat);
+        // Main cross roads
+        const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(300, 32), roadMat);
         mainRoadX.rotation.x = -Math.PI / 2;
         mainRoadX.position.y = 0.01;
         cityGroup.add(mainRoadX);
 
-        const mainRoadZ = new THREE.Mesh(new THREE.PlaneGeometry(30, 300), roadMat);
+        const mainRoadZ = new THREE.Mesh(new THREE.PlaneGeometry(32, 300), roadMat);
         mainRoadZ.rotation.x = -Math.PI / 2;
         mainRoadZ.position.y = 0.02;
         cityGroup.add(mainRoadZ);
 
+        // Add Realistic White Markings
+        const whiteLineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+        // Add white edge lines and dashed middle lines for roads
+        for (let i = -145; i < 145; i += 12) {
+            // Center dashed white lines (X road)
+            const dashX = new THREE.Mesh(new THREE.BoxGeometry(4, 0.03, 0.3), whiteLineMat);
+            dashX.position.set(i, 0.03, 0);
+            cityGroup.add(dashX);
+
+            // Center dashed white lines (Z road)
+            const dashZ = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 4), whiteLineMat);
+            dashZ.position.set(0, 0.03, i);
+            cityGroup.add(dashZ);
+        }
+
+        // City Buildings
         const buildingMat = new THREE.MeshStandardMaterial({ color: 0x222629, roughness: 0.4 });
         const buildingPositions = [
             [-50, -50], [-50, 50], [50, -50], [50, 50],
@@ -139,49 +183,54 @@
             building.position.set(x, height / 2, z);
             cityGroup.add(building);
         });
+
         scene.add(cityGroup);
 
-        // --- DETAILED YELLOW PORSCHE MODEL WITH BRAKE LIGHTS ---
+
+        // --- DETAILED YELLOW PORSCHE WITH GLOWING BRAKE LIGHTS ---
         const carGroup = new THREE.Group();
 
+        // Lower body chassis
         const lowerGeo = new THREE.BoxGeometry(2.1, 0.4, 4.2);
         const carMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.6, roughness: 0.2 });
         const lowerBody = new THREE.Mesh(lowerGeo, carMat);
         lowerBody.position.y = 0.35;
         carGroup.add(lowerBody);
 
+        // Cabin
         const cabinGeo = new THREE.BoxGeometry(1.7, 0.45, 2.0);
         const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 });
         const cabin = new THREE.Mesh(cabinGeo, glassMat);
         cabin.position.set(0, 0.75, -0.2);
         carGroup.add(cabin);
 
+        // Rear Spoiler
         const spoilerGeo = new THREE.BoxGeometry(1.9, 0.1, 0.6);
         const spoiler = new THREE.Mesh(spoilerGeo, carMat);
         spoiler.position.set(0, 0.9, -1.8);
         carGroup.add(spoiler);
 
-        // Headlights
-        const headLightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const leftHeadLight = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.1), headLightMat);
-        leftHeadLight.position.set(-0.7, 0.4, 2.1);
-        carGroup.add(leftHeadLight);
-        const rightHeadLight = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.1), headLightMat);
-        rightHeadLight.position.set(0.7, 0.4, 2.1);
-        carGroup.add(rightHeadLight);
-
-        // ** Glowing Rear Brake Lights **
-        const brakeLightMatOff = new THREE.MeshBasicMaterial({ color: 0x550000 }); // Dim dark red when not braking
-        const brakeLightMatOn = new THREE.MeshBasicMaterial({ color: 0xff0000 });   // Bright glowing red when braking
+        // Headlights (White)
+        const lightGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
+        const whiteLightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         
-        const brakeGeo = new THREE.BoxGeometry(0.4, 0.15, 0.1);
-        const leftBrakeLight = new THREE.Mesh(brakeGeo, brakeLightMatOff);
-        leftBrakeLight.position.set(-0.7, 0.4, -2.1);
-        carGroup.add(leftBrakeLight);
+        const leftLight = new THREE.Mesh(lightGeo, whiteLightMat);
+        leftLight.position.set(-0.7, 0.4, 2.1);
+        carGroup.add(leftLight);
 
-        const rightBrakeLight = new THREE.Mesh(brakeGeo, brakeLightMatOff);
-        rightBrakeLight.position.set(0.7, 0.4, -2.1);
-        carGroup.add(rightBrakeLight);
+        const rightLight = new THREE.Mesh(lightGeo, whiteLightMat);
+        rightLight.position.set(0.7, 0.4, 2.1);
+        carGroup.add(rightLight);
+
+        // Brake Lights (Red - glowing dynamic material)
+        const brakeLightMat = new THREE.MeshBasicMaterial({ color: 0x330000 }); // Dim when idle
+        const leftBrake = new THREE.Mesh(lightGeo, brakeLightMat);
+        leftBrake.position.set(-0.7, 0.4, -2.1);
+        carGroup.add(leftBrake);
+
+        const rightBrake = new THREE.Mesh(lightGeo, brakeLightMat);
+        rightBrake.position.set(0.7, 0.4, -2.1);
+        carGroup.add(rightBrake);
 
         // Wheels
         const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 16);
@@ -191,55 +240,4 @@
             [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]
         ];
         wheels.forEach(pos => {
-            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-            wheel.rotation.z = Math.PI / 2;
-            wheel.position.set(...pos);
-            carGroup.add(wheel);
-        });
-
-        scene.add(carGroup);
-
-        camera.position.set(0, 4, -8);
-        camera.lookAt(carGroup.position);
-
-        // Controls State
-        let speed = 0;
-        let steering = 0;
-        const keys = {};
-
-        window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
-        window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
-
-        function bindTouch(id, keyName) {
-            const btn = document.getElementById(id);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
-            btn.addEventListener('mousedown', () => keys[keyName] = true);
-            btn.addEventListener('mouseup', () => keys[keyName] = false);
-        }
-
-        bindTouch('leftBtn', 'a');
-        bindTouch('rightBtn', 'd');
-        bindTouch('accelBtn', 'w');      // Accelerate Up
-        bindTouch('reverseBtn', 's');   // Reverse Down
-        bindTouch('brakeBtn', ' ');     // Brake Button (Spacebar / Red Square)
-
-        // Game Loop
-        function animate() {
-            requestAnimationFrame(animate);
-
-            let isBraking = false;
-
-            // Separate controls logic
-            if (keys['w']) {
-                speed = Math.min(speed + 0.025, 0.9);
-            } else if (keys['s']) {
-                speed = Math.max(speed - 0.025, -0.3); // Reverse
-            } else if (keys[' ']) { // Brake button pressed
-                speed *= 0.85; // Hard braking slowdown
-                isBraking = true;
-            } else {
-                speed *= 0.96; // Natural coasting friction
-            }
-
-            //
+            const wheel = new THREE.Mesh(wheelGeo, wheel
