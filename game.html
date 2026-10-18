@@ -3,524 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Open World - RONISH Gaming</title>
+    <title>RONISH Gaming - Open World</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; }
-        
-        /* Landscape Orientation Lock Warning */
-        #orientation-warning {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #050510;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            color: #FFD700;
-            font-family: 'Segoe UI', sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-        #orientation-warning h1 { font-size: 1.8rem; margin-bottom: 10px; }
-        #orientation-warning p { color: #aaa; font-size: 1rem; }
-
-        @media screen and (orientation: portrait) {
-            #orientation-warning { display: flex; }
-        }
-
-        /* Clean Mobile Touch Controls Layout matching reference */
-        .controls-container {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 40px;
-            box-sizing: border-box;
-            z-index: 10;
-            pointer-events: none;
-        }
-        .steering-group {
-            display: flex;
-            gap: 15px;
-            pointer-events: auto;
-            align-self: flex-end;
-        }
-        .pedals-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: auto;
-            align-items: flex-end;
-        }
-        
-        .steer-btn {
-            width: 70px;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            color: #ffffff;
-            font-size: 1.4rem;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            outline: none;
-            backdrop-filter: blur(4px);
-            -webkit-tap-highlight-color: transparent;
-        }
-        .steer-btn:active {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0.92);
-        }
-
-        .pedal-btn {
-            width: 60px;
-            height: 48px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            color: #ffffff;
-            font-size: 0.75rem;
-            font-weight: bold;
-            border-radius: 6px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            outline: none;
-            backdrop-filter: blur(4px);
-            -webkit-tap-highlight-color: transparent;
-            text-transform: uppercase;
-        }
-        .pedal-btn:active {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0.95);
-        }
-
-        #hud {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            display: flex;
-            gap: 15px;
-            z-index: 10;
-        }
-        .hud-box {
-            color: #FFD700;
-            background: rgba(0,0,0,0.7);
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-family: 'Segoe UI', sans-serif;
-            font-weight: bold;
-            border: 1px solid #FFD700;
-            font-size: 0.9rem;
-        }
-        
-        #audio-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-            color: #FFD700;
-            font-family: 'Segoe UI', sans-serif;
-            text-align: center;
-            cursor: pointer;
-        }
-        #audio-overlay h1 { margin-bottom: 10px; font-size: 2rem; }
-        #audio-overlay p { color: #ccc; font-size: 1rem; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; }
+        #ui-layer { position: absolute; bottom: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 10; pointer-events: none; }
+        .controls-group { display: flex; gap: 10px; pointer-events: auto; }
+        .btn { width: 65px; height: 65px; background: rgba(0, 0, 0, 0.6); border: 2px solid white; color: white; font-size: 20px; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; user-select: none; }
+        #action-btn { background: rgba(200, 50, 50, 0.85); border-radius: 12px; width: 100px; font-size: 13px; text-align: center; }
+        #info { position: absolute; top: 10px; left: 10px; color: white; font-size: 14px; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px; }
     </style>
 </head>
 <body>
-
-    <div id="orientation-warning">
-        <h1>📱 Rotate Your Phone</h1>
-        <p>Please hold your phone horizontally to play RONISH Gaming Open World!</p>
-    </div>
-
-    <div id="audio-overlay" onclick="initAudio()">
-        <h1>RONISH Gaming - Open World</h1>
-        <p>🔊 Tap anywhere to start engine audio!</p>
-    </div>
-
-    <div id="hud">
-        <div class="hud-box" id="timeDisplay">TIME: DAY</div>
-        <div class="hud-box" id="speedometer">SPEED: 0 MPH</div>
-    </div>
-
-    <!-- Clean Touch Controls matching reference image -->
-    <div class="controls-container">
-        <div class="steering-group">
-            <button class="steer-btn" id="leftBtn">◀</button>
-            <button class="steer-btn" id="rightBtn">▶</button>
+    <div id="info">Open World Game | Walk & Drive</div>
+    <div id="ui-layer">
+        <div class="controls-group">
+            <div class="btn" id="btn-left">◀</div>
+            <div class="btn" id="btn-up">▲</div>
+            <div class="btn" id="btn-down">▼</div>
+            <div class="btn" id="btn-right">▶</div>
         </div>
-        <div class="pedals-group">
-            <button class="pedal-btn" id="accelBtn">GAS</button>
-            <button class="pedal-btn" id="brakeBtn">BRAKE</button>
-            <button class="pedal-btn" id="revBtn">REV</button>
+        <div class="controls-group">
+            <div class="btn" id="action-btn">GET IN / OUT</div>
         </div>
     </div>
 
-    <!-- Include Three.js -->
+    <!-- Include Three.js for 3D graphics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Web Audio Synth
-        let audioCtx = null;
-        let engineOsc = null;
-        let engineGain = null;
-        let soundInitialized = false;
+        let scene, camera, renderer;
+        let player, car, trafficCars = [];
+        let isDriving = false;
+        let moveInput = { x: 0, z: 0 };
 
-        function initAudio() {
-            if (soundInitialized) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            engineOsc = audioCtx.createOscillator();
-            engineOsc.type = 'sawtooth';
-            engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
+        init();
+        animate();
 
-            engineGain = audioCtx.createGain();
-            engineGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        function init() {
+            // Scene & Camera
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(350, audioCtx.currentTime);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-            engineOsc.connect(filter);
-            filter.connect(engineGain);
-            engineGain.connect(audioCtx.destination);
-            engineOsc.start();
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
 
-            soundInitialized = true;
-            document.getElementById('audio-overlay').style.display = 'none';
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+            sun.position.set(50, 100, 50);
+            sun.castShadow = true;
+            scene.add(sun);
+
+            // --- WORLD GENERATION ---
+            createBox(0, -1, 0, 300, 1, 300, 0x0066cc); // Ocean
+            createBox(0, 0, 0, 60, 0.5, 60, 0x33cc33);    // Island Ground
+            createBox(0, 0.26, 0, 10, 0.1, 60, 0x222222);  // Asphalt Road
+            createBox(-18, 0.3, 0, 6, 0.1, 60, 0xe6ccb3);  // Beach
+            createBox(25, 5, 0, 15, 10, 60, 0x66523d);    // Mountain
+
+            // Rail Tracks
+            createBox(-10, 0.35, 0, 0.4, 0.2, 60, 0x444444);
+            createBox(-11.5, 0.35, 0, 0.4, 0.2, 60, 0x444444);
+
+            // --- SPAWN PLAYER ---
+            const playerGeo = new THREE.CapsuleGeometry(0.4, 1, 4, 8);
+            const playerMat = new THREE.MeshStandardMaterial({ color: 0x17a2b8 });
+            player = new THREE.Mesh(playerGeo, playerMat);
+            player.position.set(0, 1, 5);
+            player.castShadow = true;
+            scene.add(player);
+
+            // --- SPAWN STYLISH CAR ---
+            const carGeo = new THREE.BoxGeometry(2.2, 0.9, 4.5);
+            const carMat = new THREE.MeshStandardMaterial({ color: 0xe60000, metalness: 0.5, roughness: 0.2 });
+            car = new THREE.Mesh(carGeo, carMat);
+            car.position.set(0, 0.8, 0);
+            car.castShadow = true;
+            scene.add(car);
+
+            // --- SPAWN NPC TRAFFIC CARS ---
+            spawnTraffic(3, 0.8, 15, 0x0000cc);
+            spawnTraffic(-3, 0.8, -20, 0xcccc00);
+
+            // Touch UI Listeners
+            setupTouchControls();
+
+            window.addEventListener('resize', onWindowResize);
         }
 
-        function playBrakeScreech() {
-            if (!soundInitialized || !audioCtx) return;
-            const bufferSize = audioCtx.sampleRate * 0.15;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
-            filter.Q.setValueAtTime(4, audioCtx.currentTime);
-
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-
-            noise.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            noise.start();
+        function createBox(x, y, z, w, h, d, color) {
+            const geo = new THREE.BoxGeometry(w, h, d);
+            const mat = new THREE.MeshStandardMaterial({ color: color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            mesh.receiveShadow = true;
+            scene.add(mesh);
         }
 
-        // Three.js Setup
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x70b5ff);
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-        scene.add(ambientLight);
-        
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(40, 80, 40);
-        scene.add(dirLight);
-
-        // --- OPEN WORLD MAP (Roads, Rail Tracks, Palm Trees) ---
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.9 });
-        const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(500, 32), roadMat);
-        mainRoadX.rotation.x = -Math.PI / 2;
-        mainRoadX.position.y = 0.01;
-        scene.add(mainRoadX);
-
-        const mainRoadZ = new THREE.Mesh(new THREE.PlaneGeometry(32, 500), roadMat);
-        mainRoadZ.rotation.x = -Math.PI / 2;
-        mainRoadZ.position.y = 0.02;
-        scene.add(mainRoadZ);
-
-        // Rail Tracks alongside road
-        const railMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.8 });
-        const track1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 500), railMat);
-        track1.position.set(-22, 0.05, 0);
-        scene.add(track1);
-        const track2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 500), railMat);
-        track2.position.set(-23.5, 0.05, 0);
-        scene.add(track2);
-
-        // Palm Trees & Scenery
-        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x8B5A2B });
-        const leafMat = new THREE.MeshStandardMaterial({ color: 0x2E8B57 });
-
-        function createPalmTree(x, z) {
-            const group = new THREE.Group();
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 4, 8), trunkMat);
-            trunk.position.y = 2;
-            group.add(trunk);
-            for (let i = 0; i < 5; i++) {
-                const leaf = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.1, 0.6), leafMat);
-                leaf.position.y = 4;
-                leaf.rotation.y = (i * Math.PI) / 2.5;
-                leaf.rotation.x = 0.3;
-                group.add(leaf);
-            }
-            group.position.set(x, 0, z);
-            scene.add(group);
+        function spawnTraffic(x, y, z, color) {
+            const geo = new THREE.BoxGeometry(2, 0.8, 4);
+            const mat = new THREE.MeshStandardMaterial({ color: color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            scene.add(mesh);
+            trafficCars.push(mesh);
         }
 
-        for (let p = -200; p <= 200; p += 30) {
-            if (Math.abs(p) > 20) {
-                createPalmTree(20, p);
-                createPalmTree(-28, p);
-            }
-        }
+        function setupTouchControls() {
+            const bind = (id, xVal, zVal) => {
+                const el = document.getElementById(id);
+                el.addEventListener('touchstart', (e) => { moveInput.x = xVal; moveInput.z = zVal; e.preventDefault(); });
+                el.addEventListener('touchend', () => { moveInput.x = 0; moveInput.z = 0; });
+                el.addEventListener('mousedown', () => { moveInput.x = xVal; moveInput.z = zVal; });
+                el.addEventListener('mouseup', () => { moveInput.x = 0; moveInput.z = 0; });
+            };
 
-        // Buildings
-        const buildingMat = new THREE.MeshStandardMaterial({ color: 0x222629 });
-        [-80, 80].forEach(x => {
-            [-80, 80].forEach(z => {
-                const b = new THREE.Mesh(new THREE.BoxGeometry(35, 45, 35), buildingMat);
-                b.position.set(x, 22.5, z);
-                scene.add(b);
+            bind('btn-up', 0, -1);
+            bind('btn-down', 0, 1);
+            bind('btn-left', -1, 0);
+            bind('btn-right', 1, 0);
+
+            document.getElementById('action-btn').addEventListener('click', () => {
+                const dist = player.position.distanceTo(car.position);
+                if (!isDriving && dist < 5) {
+                    isDriving = true;
+                    player.visible = false;
+                } else if (isDriving) {
+                    isDriving = false;
+                    player.visible = true;
+                    player.position.copy(car.position).add(new THREE.Vector3(2, 0, 0));
+                }
             });
-        });
-
-
-        // --- REALISTIC 3D WHITE & CARBON SPORTS CAR ---
-        const carGroup = new THREE.Group();
-        const whiteCarMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, metalness: 0.3, roughness: 0.2 });
-        const carbonMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 });
-        const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 });
-
-        // Main Body
-        const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.45, 4.4), whiteCarMat);
-        lowerBody.position.y = 0.4;
-        carGroup.add(lowerBody);
-
-        // Carbon Hood
-        const hood = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.25, 1.5), carbonMat);
-        hood.position.set(0, 0.55, 1.3);
-        hood.rotation.x = -0.15;
-        carGroup.add(hood);
-
-        // Cabin Roof
-        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 2.1), glassMat);
-        cabin.position.set(0, 0.85, -0.2);
-        carGroup.add(cabin);
-
-        // Rear Racing Wing (Spoiler)
-        const spoilerWing = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.08, 0.5), carbonMat);
-        spoilerWing.position.set(0, 1.05, -1.9);
-        carGroup.add(spoilerWing);
-        const wingStandL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), carbonMat);
-        wingStandL.position.set(-0.7, 0.95, -1.9);
-        carGroup.add(wingStandL);
-        const wingStandR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.1), carbonMat);
-        wingStandR.position.set(0.7, 0.95, -1.9);
-        carGroup.add(wingStandR);
-
-        // Headlights & Spotlights
-        const lightGeo = new THREE.BoxGeometry(0.35, 0.15, 0.1);
-        const headLightMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
-        
-        const leftHead = new THREE.Mesh(lightGeo, headLightMat);
-        leftHead.position.set(-0.75, 0.45, 2.22);
-        carGroup.add(leftHead);
-        const rightHead = new THREE.Mesh(lightGeo, headLightMat);
-        rightHead.position.set(0.75, 0.45, 2.22);
-        carGroup.add(rightHead);
-
-        const carSpotLight = new THREE.SpotLight(0xffffff, 0, 50, Math.PI / 4, 0.5, 2);
-        carSpotLight.position.set(0, 0.8, 2.2);
-        carSpotLight.target.position.set(0, 0, 10);
-        carGroup.add(carSpotLight);
-        carGroup.add(carSpotLight.target);
-
-        // Brake Lights
-        const brakeLightMat = new THREE.MeshBasicMaterial({ color: 0x330000 });
-        const leftBrake = new THREE.Mesh(lightGeo, brakeLightMat);
-        leftBrake.position.set(-0.75, 0.45, -2.22);
-        carGroup.add(leftBrake);
-        const rightBrake = new THREE.Mesh(lightGeo, brakeLightMat);
-        rightBrake.position.set(0.75, 0.45, -2.22);
-        carGroup.add(rightBrake);
-
-        // Wheels
-        const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.3, 16);
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.9 });
-        const wheelCoords = [
-            [-1.1, 0.4, 1.4], [1.1, 0.4, 1.4],
-            [-1.1, 0.4, -1.4], [1.1, 0.4, -1.4]
-        ];
-        wheelCoords.forEach(pos => {
-            const w = new THREE.Mesh(wheelGeo, wheelMat);
-            w.rotation.z = Math.PI / 2;
-            w.position.set(...pos);
-            carGroup.add(w);
-        });
-
-        scene.add(carGroup);
-
-
-        // --- TRAFFIC CARS ---
-        const trafficCars = [];
-        const trafficColors = [0xef233c, 0x2b2d42, 0x3a86ff, 0xff7b00];
-
-        function createTrafficCar(colorHex) {
-            const g = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.3 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.5, 4.2), mat);
-            body.position.y = 0.4;
-            g.add(body);
-            const top = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.45, 2.0), glassMat);
-            top.position.set(0, 0.8, -0.1);
-            g.add(top);
-            return g;
         }
 
-        for (let i = 0; i < 5; i++) {
-            const col = trafficColors[Math.floor(Math.random() * trafficColors.length)];
-            const t = createTrafficCar(col);
-            t.position.set((Math.random() - 0.5) * 200, 0, (Math.random() - 0.5) * 200);
-            scene.add(t);
-            trafficCars.push({ mesh: t, speed: 0.3 + Math.random() * 0.3, dir: Math.random() > 0.5 ? 'x' : 'z' });
-        }
-
-
-        // Camera
-        camera.position.set(0, 3.8, -8);
-        camera.lookAt(carGroup.position);
-
-        // Controls State
-        let speed = 0;
-        let steering = 0;
-        const keys = {};
-
-        window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
-        window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
-
-        function bindTouch(id, keyName) {
-            const btn = document.getElementById(id);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
-            btn.addEventListener('mousedown', () => keys[keyName] = true);
-            btn.addEventListener('mouseup', () => keys[keyName] = false);
-        }
-
-        bindTouch('leftBtn', 'a');
-        bindTouch('rightBtn', 'd');
-        bindTouch('accelBtn', 'w');
-        bindTouch('brakeBtn', 's');
-        bindTouch('revBtn', 'r');
-
-        let gameTimeSeconds = 0;
-
-        // Game Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // Day/Night Cycle
-            gameTimeSeconds += 0.016;
-            const cycleProgress = (gameTimeSeconds % 600) / 600;
-            const isNight = cycleProgress >= 0.5;
-            
-            document.getElementById('timeDisplay').innerText = isNight ? "TIME: NIGHT" : "TIME: DAY";
+            const speed = 0.1;
+            if (!isDriving) {
+                player.position.x += moveInput.x * speed;
+                player.position.z += moveInput.z * speed;
 
-            if (isNight) {
-                scene.background.setHex(0x050510);
-                dirLight.color.setHex(0x4466aa);
-                dirLight.intensity = 0.2;
-                ambientLight.intensity = 0.2;
-                headLightMat.color.setHex(0xffffff);
-                carSpotLight.intensity = 3.0;
+                // Camera follow player
+                camera.position.set(player.position.x, player.position.y + 6, player.position.z + 8);
+                camera.lookAt(player.position);
             } else {
-                scene.background.setHex(0x70b5ff);
-                dirLight.color.setHex(0xffffff);
-                dirLight.intensity = 1.2;
-                ambientLight.intensity = 0.8;
-                headLightMat.color.setHex(0x333333);
-                carSpotLight.intensity = 0;
+                car.position.x += moveInput.x * (speed * 1.5);
+                car.position.z += moveInput.z * (speed * 1.5);
+
+                // Camera follow car
+                camera.position.set(car.position.x, car.position.y + 7, car.position.z + 10);
+                camera.lookAt(car.position);
             }
-
-            let isBraking = false;
-
-            if (keys['w'] || keys['arrowup']) {
-                speed = Math.min(speed + 0.025, 0.95);
-            } else if (keys['s'] || keys['arrowdown']) {
-                if (speed > 0.02) {
-                    speed = Math.max(speed - 0.04, 0);
-                    isBraking = true;
-                    playBrakeScreech();
-                } else {
-                    speed = Math.max(speed - 0.02, -0.3);
-                }
-            } else if (keys['r']) {
-                speed = Math.max(speed - 0.02, -0.4);
-            } else {
-                speed *= 0.95;
-            }
-
-            // Engine Audio
-            if (soundInitialized && engineOsc && audioCtx) {
-                const targetFreq = 55 + Math.abs(speed) * 280;
-                engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
-                engineGain.gain.setTargetAtTime(0.015 + Math.abs(speed) * 0.055, audioCtx.currentTime, 0.1);
-            }
-
-            if (isBraking) {
-                brakeLightMat.color.setHex(0xff0000);
-            } else {
-                brakeLightMat.color.setHex(0x330000);
-            }
-
-            if (keys['a'] || keys['arrowleft']) steering = 0.045;
-            else if (keys['d'] || keys['arrowright']) steering = -0.045;
-            else steering = 0;
-
-            carGroup.rotation.y += steering * (speed * 1.5);
-            carGroup.translateZ(speed);
-
-            // Traffic Movement
-            trafficCars.forEach(car => {
-                if (car.dir === 'x') {
-                    car.mesh.position.x += car.speed;
-                    car.mesh.rotation.y = car.speed > 0 ? 0 : Math.PI;
-                    if (car.mesh.position.x > 220) car.mesh.position.x = -220;
-                } else {
-                    car.mesh.position.z += car.speed;
-                    car.mesh.rotation.y = car.speed > 0 ? Math.PI / 2 : -Math.PI / 2;
-                    if (car.mesh.position.z > 220) car.mesh.position.z = -220;
-                }
-            });
-
-            document.getElementById('speedometer').innerText = `SPEED: ${Math.round(Math.abs(speed) * 120)} MPH`;
-
-            // Smooth Camera Follow
-            const offset = new THREE.Vector3(0, 3.3, -7.5).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
-            camera.position.copy(carGroup.position).add(offset);
-            camera.lookAt(carGroup.position);
 
             renderer.render(scene, camera);
         }
 
-        animate();
-
-        window.addEventListener('resize', () => {
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        }
     </script>
 </body>
 </html>
