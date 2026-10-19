@@ -2,256 +2,217 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RONISH Gaming - Retro 2D Open World</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Open World Game</title>
     <style>
-        * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #2e8b57; font-family: monospace; touch-action: none; }
-        canvas { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        
-        /* Retro Joystick D-Pad */
-        #joystick-container { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px; background: rgba(0,0,0,0.4); border: 3px solid rgba(255,255,255,0.7); border-radius: 50%; z-index: 10; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); align-items: center; justify-items: center; }
-        .j-btn { width: 40px; height: 40px; background: rgba(50,50,50,0.8); color: white; font-size: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; user-select: none; border: 2px solid rgba(255,255,255,0.8); }
-        #j-up { grid-column: 2; grid-row: 1; }
-        #j-left { grid-column: 1; grid-row: 2; }
-        #j-right { grid-column: 3; grid-row: 2; }
-        #j-down { grid-column: 2; grid-row: 3; }
-
-        /* Action Prompt Button (Enter / Exit Car) */
-        #action-btn { position: absolute; bottom: 50px; right: 40px; width: 90px; height: 90px; background: #cc0000; border: 4px solid white; color: white; font-size: 14px; font-weight: bold; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 10; user-select: none; box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-align: center; }
-        
-        #info { position: absolute; top: 15px; left: 15px; color: white; font-size: 14px; background: rgba(0,0,0,0.7); padding: 8px 14px; border-radius: 6px; z-index: 10; border-left: 4px solid #ffcc00; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+            pointer-events: none;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
-    <div id="info">RONISH Gaming | Retro 2D Open World</div>
 
-    <!-- Retro On-Screen Joystick -->
-    <div id="joystick-container">
-        <div class="j-btn" id="j-up">▲</div>
-        <div class="j-btn" id="j-left">◀</div>
-        <div class="j-btn" id="j-right">▶</div>
-        <div class="j-btn" id="j-down">▼</div>
-    </div>
+    <div id="ui">Use <b>W, A, S, D</b> to Walk/Drive | Approach Car & Press <b>F</b> to Enter/Exit</div>
+    <div id="crosshair">+</div>
 
-    <!-- Action Button -->
-    <div id="action-btn">ENTER</div>
-
-    <canvas id="gameCanvas"></canvas>
+    <!-- Include Three.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        // --- 1. SCENE, CAMERA, & RENDERER ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
 
-        // Game World Entities
-        const house = { x: 100, y: 120, w: 110, h: 90, color: '#c2b280', roofColor: '#8b0000' };
-        const car = { x: 260, y: 160, w: 60, h: 32, color: '#ff2222', angle: 0 };
-        const player = { x: 160, y: 240, radius: 10, color: '#3399ff', angle: 0 };
+        // --- 2. LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
 
-        let isDriving = false;
-        let moveInput = { x: 0, y: 0 };
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(50, 100, 50);
+        scene.add(dirLight);
 
-        // Controls Setup
-        function setupControls() {
-            const bind = function(id, xVal, yVal) {
-                const el = document.getElementById(id);
-                if(!el) return;
-                
-                const startMove = function(e) { moveInput.x = xVal; moveInput.y = yVal; if(e) e.preventDefault(); };
-                const endMove = function(e) { moveInput.x = 0; moveInput.y = 0; if(e) e.preventDefault(); };
+        // --- 3. WORLD (Island, Roads, House) ---
+        // Ground / Island
+        const groundGeo = new THREE.PlaneGeometry(500, 500);
+        const groundMat = new THREE.MeshLambertMaterial({ color: 0x38a169 }); // Green grass
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
 
-                el.addEventListener('touchstart', startMove, {passive: false});
-                el.addEventListener('touchend', endMove, {passive: false});
-                el.addEventListener('mousedown', startMove);
-                el.addEventListener('mouseup', endMove);
-            };
+        // Roads
+        const roadMat = new THREE.MeshLambertMaterial({ color: 0x2d3748 });
+        const roadX = new THREE.Mesh(new THREE.PlaneGeometry(500, 20), roadMat);
+        roadX.rotation.x = -Math.PI / 2;
+        roadX.position.y = 0.05;
+        scene.add(roadX);
 
-            bind('j-up', 0, -1);
-            bind('j-down', 0, 1);
-            bind('j-left', -1, 0);
-            bind('j-right', 1, 0);
+        const roadZ = new THREE.Mesh(new THREE.PlaneGeometry(20, 500), roadMat);
+        roadZ.rotation.x = -Math.PI / 2;
+        roadZ.position.y = 0.06;
+        scene.add(roadZ);
 
-            // Action Button Click (Enter / Exit)
-            const actionBtn = document.getElementById('action-btn');
-            actionBtn.addEventListener('click', function() {
-                if (!isDriving) {
-                    isDriving = true;
-                    actionBtn.innerText = "EXIT";
-                    actionBtn.style.background = "#0066cc";
-                } else {
-                    isDriving = false;
-                    // Step out right beside the car on the left
-                    player.x = car.x - 45;
-                    player.y = car.y;
-                    actionBtn.style.display = "none";
-                    actionBtn.innerText = "ENTER";
-                    actionBtn.style.background = "#cc0000";
-                }
-            });
-        }
-        setupControls();
+        // House (Center)
+        const houseGroup = new THREE.Group();
+        const wallsMat = new THREE.MeshLambertMaterial({ color: 0x718096 });
+        const walls = new THREE.Mesh(new THREE.BoxGeometry(15, 10, 15), wallsMat);
+        walls.position.y = 5;
+        houseGroup.add(walls);
 
-        // Update Game Logic
-        function update() {
-            const speed = 3.0;
-            const actionBtn = document.getElementById('action-btn');
+        const roofMat = new THREE.MeshLambertMaterial({ color: 0xc53030 });
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(12, 6, 4), roofMat);
+        roof.position.y = 13;
+        roof.rotation.y = Math.PI / 4;
+        houseGroup.add(roof);
 
-            if (moveInput.x !== 0 || moveInput.y !== 0) {
-                if (!isDriving) {
-                    player.angle = Math.atan2(moveInput.y, moveInput.x);
-                } else {
-                    car.angle = Math.atan2(moveInput.y, moveInput.x);
-                }
+        houseGroup.position.set(0, 0, -25);
+        scene.add(houseGroup);
+
+        // --- 4. CAR ---
+        const carGroup = new THREE.Group();
+        const carBodyMat = new THREE.MeshLambertMaterial({ color: 0x3182ce });
+        const carBody = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 10), carBodyMat);
+        carBody.position.y = 1.5;
+        carGroup.add(carBody);
+
+        const carTopMat = new THREE.MeshLambertMaterial({ color: 0x63b3ed });
+        const carTop = new THREE.Mesh(new THREE.BoxGeometry(4, 2, 5), carTopMat);
+        carTop.position.set(0, 3.5, 0);
+        carGroup.add(carTop);
+
+        // Parked on the right side of the road
+        carGroup.position.set(18, 0, 15);
+        scene.add(carGroup);
+
+        // --- 5. PLAYER ---
+        const player = {
+            x: 0,
+            y: 2,
+            z: 10,
+            speed: 0.3,
+            inCar: false,
+            angle: 0
+        };
+
+        // Car Physics Variables
+        let carSpeed = 0;
+        let carAngle = 0;
+
+        // Input Controls
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key.toLowerCase() === 'f') {
+                toggleCar();
             }
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
 
-            if (!isDriving) {
-                player.x += moveInput.x * speed;
-                player.y += moveInput.y * speed;
+        function toggleCar() {
+            let dist = Math.hypot(player.x - carGroup.position.x, player.z - carGroup.position.z);
+            if (!player.inCar && dist < 8) {
+                player.inCar = true;
+            } else if (player.inCar) {
+                player.inCar = false;
+                // Step out to the side
+                player.x = carGroup.position.x - 6;
+                player.z = carGroup.position.z;
+            }
+        }
 
-                // Screen boundaries
-                player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
-                player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
+        // --- 6. GAME LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
 
-                // Check distance to car for ENTER prompt
-                const dx = player.x - car.x;
-                const dy = player.y - car.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+            if (!player.inCar) {
+                // Walking Controls (Minecraft style)
+                if (keys['w']) { player.z -= player.speed; }
+                if (keys['s']) { player.z += player.speed; }
+                if (keys['a']) { player.x -= player.speed; }
+                if (keys['d']) { player.x += player.speed; }
 
-                if (dist < 65) {
-                    actionBtn.style.display = "flex";
-                    actionBtn.innerText = "ENTER";
-                    actionBtn.style.background = "#cc0000";
-                } else {
-                    actionBtn.style.display = "none";
-                }
+                // Camera follows player (Third-person view behind player)
+                camera.position.set(player.x, player.y + 6, player.z + 12);
+                camera.lookAt(player.x, player.y, player.z);
+
             } else {
-                // Drive car smoothly
-                const carSpeed = 4.5;
-                car.x += moveInput.x * carSpeed;
-                car.y += moveInput.y * carSpeed;
+                // Driving Controls (GTA style car physics)
+                if (keys['w']) { carSpeed = Math.min(carSpeed + 0.02, 0.8); }
+                else if (keys['s']) { carSpeed = Math.max(carSpeed - 0.02, -0.4); }
+                else { carSpeed *= 0.95; } // friction
 
-                car.x = Math.max(30, Math.min(canvas.width - 30, car.x));
-                car.y = Math.max(30, Math.min(canvas.height - 30, car.y));
+                if (keys['a']) { carAngle += 0.03 * (carSpeed / 0.8); }
+                if (keys['d']) { carAngle -= 0.03 * (carSpeed / 0.8); }
 
-                // Player stays inside car while driving
-                player.x = car.x;
-                player.y = car.y;
+                carGroup.rotation.y = carAngle;
+                carGroup.position.x += Math.sin(carAngle) * carSpeed;
+                carGroup.position.z += Math.cos(carAngle) * carSpeed;
 
-                actionBtn.style.display = "flex";
-                actionBtn.innerText = "EXIT";
-                actionBtn.style.background = "#0066cc";
+                // Sync player to car position
+                player.x = carGroup.position.x;
+                player.z = carGroup.position.z;
+
+                // Camera follows car from behind
+                let camX = carGroup.position.x - Math.sin(carAngle) * 15;
+                let camZ = carGroup.position.z - Math.cos(carAngle) * 15;
+                camera.position.set(camX, carGroup.position.y + 6, camZ);
+                camera.lookAt(carGroup.position.x, carGroup.position.y + 2, carGroup.position.z);
             }
-        }
 
-        // Render Graphics (Classic Retro 2D Style)
-        function draw() {
-            // Grass background
-            ctx.fillStyle = '#3a9d23';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Asphalt Road running across the middle
-            ctx.fillStyle = '#333333';
-            ctx.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
-
-            // Road borders
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2 - 50); ctx.lineTo(canvas.width, canvas.height / 2 - 50);
-            ctx.moveTo(0, canvas.height / 2 + 50); ctx.lineTo(canvas.width, canvas.height / 2 + 50);
-            ctx.stroke();
-
-            // Dashed yellow center line
-            ctx.strokeStyle = '#ffcc00';
-            ctx.lineWidth = 4;
-            ctx.setLineDash([20, 20]);
-            ctx.beginPath();
-            ctx.moveTo(0, canvas.height / 2);
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.stroke();
-            ctx.setLineDash([]);
-
-            // Draw House (Left side)
-            ctx.fillStyle = house.color;
-            ctx.fillRect(house.x, house.y, house.w, house.h);
-            ctx.strokeStyle = '#554422';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(house.x, house.y, house.w, house.h);
-
-            // House Roof
-            ctx.fillStyle = house.roofColor;
-            ctx.beginPath();
-            ctx.moveTo(house.x - 15, house.y);
-            ctx.lineTo(house.x + house.w / 2, house.y - 50);
-            ctx.lineTo(house.x + house.w + 15, house.y);
-            ctx.closePath();
-            ctx.fill();
-
-            // House Door & Windows
-            ctx.fillStyle = '#553311';
-            ctx.fillRect(house.x + house.w / 2 - 12, house.y + house.h - 35, 24, 35);
-            ctx.fillStyle = '#87ceeb';
-            ctx.fillRect(house.x + 15, house.y + 20, 20, 20);
-            ctx.fillRect(house.x + house.w - 35, house.y + 20, 20, 20);
-
-            // Draw Car (Top-down style)
-            ctx.save();
-            ctx.translate(car.x, car.y);
-            ctx.rotate(car.angle);
-            // Car Body
-            ctx.fillStyle = car.color;
-            ctx.fillRect(-car.w / 2, -car.h / 2, car.w, car.h);
-            ctx.strokeStyle = '#880000';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(-car.w / 2, -car.h / 2, car.w, car.h);
-            // Windshield
-            ctx.fillStyle = '#111111';
-            ctx.fillRect(-5, -car.h / 2 + 6, 18, car.h - 12);
-            // Headlights
-            ctx.fillStyle = '#ffff00';
-            ctx.fillRect(car.w / 2 - 4, -car.h / 2 + 3, 4, 6);
-            ctx.fillRect(car.w / 2 - 4, car.h / 2 - 9, 4, 6);
-            ctx.restore();
-
-            // Draw Human Player (if not driving)
-            if (!isDriving) {
-                ctx.save();
-                ctx.translate(player.x, player.y);
-                ctx.rotate(player.angle);
-
-                // Body / Torso
-                ctx.fillStyle = player.color;
-                ctx.beginPath();
-                ctx.arc(0, 0, 9, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#ffffff';
-                ctx.stroke();
-
-                // Head / Cap
-                ctx.fillStyle = '#ffdbac';
-                ctx.beginPath();
-                ctx.arc(4, 0, 5, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.restore();
+            // Display UI prompt dynamically based on distance to car
+            let distToCar = Math.hypot(player.x - carGroup.position.x, player.z - carGroup.position.z);
+            const uiDiv = document.getElementById('ui');
+            if (!player.inCar && distToCar < 8) {
+                uiDiv.innerHTML = "<b>Press [F] to Enter Car</b>";
+            } else if (player.inCar) {
+                uiDiv.innerHTML = "<b>Press [F] to Exit Car</b> | Use W,A,S,D to Drive";
+            } else {
+                uiDiv.innerHTML = "Use <b>W, A, S, D</b> to Walk | Approach Car & Press <b>F</b> to Enter";
             }
+
+            renderer.render(scene, camera);
         }
 
-        function loop() {
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
+        animate();
 
-        loop();
+        // Handle Window Resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
+
 </body>
 </html>
