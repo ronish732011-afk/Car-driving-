@@ -3,30 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>RONISH Gaming - Open World</title>
+    <title>RONISH Gaming - Retro 2D Open World</title>
     <style>
         * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #33cc33; font-family: sans-serif; touch-action: none; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #2e8b57; font-family: monospace; touch-action: none; }
         canvas { display: block; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
         
-        /* Joystick / D-Pad Area */
-        #joystick-container { position: absolute; bottom: 30px; left: 30px; width: 130px; height: 130px; background: rgba(255,255,255,0.25); border: 2px solid rgba(255,255,255,0.6); border-radius: 50%; z-index: 10; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); align-items: center; justify-items: center; }
-        .j-btn { width: 38px; height: 38px; background: rgba(0,0,0,0.7); color: white; font-size: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; user-select: none; border: 1px solid rgba(255,255,255,0.5); }
+        /* Retro Joystick D-Pad */
+        #joystick-container { position: absolute; bottom: 30px; left: 30px; width: 140px; height: 140px; background: rgba(0,0,0,0.4); border: 3px solid rgba(255,255,255,0.7); border-radius: 50%; z-index: 10; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); align-items: center; justify-items: center; }
+        .j-btn { width: 40px; height: 40px; background: rgba(50,50,50,0.8); color: white; font-size: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; user-select: none; border: 2px solid rgba(255,255,255,0.8); }
         #j-up { grid-column: 2; grid-row: 1; }
         #j-left { grid-column: 1; grid-row: 2; }
         #j-right { grid-column: 3; grid-row: 2; }
         #j-down { grid-column: 2; grid-row: 3; }
 
         /* Action Prompt Button (Enter / Exit Car) */
-        #action-btn { position: absolute; bottom: 50px; right: 40px; width: 85px; height: 85px; background: rgba(220, 20, 60, 0.95); border: 3px solid white; color: white; font-size: 13px; font-weight: bold; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 10; user-select: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: center; }
+        #action-btn { position: absolute; bottom: 50px; right: 40px; width: 90px; height: 90px; background: #cc0000; border: 4px solid white; color: white; font-size: 14px; font-weight: bold; border-radius: 50%; display: none; align-items: center; justify-content: center; z-index: 10; user-select: none; box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-align: center; }
         
-        #info { position: absolute; top: 15px; left: 15px; color: white; font-size: 13px; background: rgba(0,0,0,0.7); padding: 8px 14px; border-radius: 6px; z-index: 10; border-left: 4px solid #dc143c; }
+        #info { position: absolute; top: 15px; left: 15px; color: white; font-size: 14px; background: rgba(0,0,0,0.7); padding: 8px 14px; border-radius: 6px; z-index: 10; border-left: 4px solid #ffcc00; }
     </style>
 </head>
 <body>
-    <div id="info">RONISH Gaming | Walk to your car & press Enter</div>
+    <div id="info">RONISH Gaming | Retro 2D Open World</div>
 
-    <!-- On-Screen Joystick -->
+    <!-- Retro On-Screen Joystick -->
     <div id="joystick-container">
         <div class="j-btn" id="j-up">▲</div>
         <div class="j-btn" id="j-left">◀</div>
@@ -34,7 +34,7 @@
         <div class="j-btn" id="j-down">▼</div>
     </div>
 
-    <!-- Dynamic Enter/Exit Button -->
+    <!-- Action Button -->
     <div id="action-btn">ENTER</div>
 
     <canvas id="gameCanvas"></canvas>
@@ -50,23 +50,27 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Game Objects Layout
-        const house = { x: 80, y: 120, w: 90, h: 80, color: '#d9b38c', roofColor: '#990000' };
-        const car = { x: 210, y: 150, w: 55, h: 30, color: '#e60000' };
-        const player = { x: 120, y: 220, radius: 10, color: '#17a2b8' };
+        // Game World Entities
+        const house = { x: 100, y: 120, w: 110, h: 90, color: '#c2b280', roofColor: '#8b0000' };
+        const car = { x: 260, y: 160, w: 60, h: 32, color: '#ff2222', angle: 0 };
+        const player = { x: 160, y: 240, radius: 10, color: '#3399ff', angle: 0 };
 
         let isDriving = false;
         let moveInput = { x: 0, y: 0 };
 
-        // Setup Joystick Controls
-        function setupJoystick() {
-            const bind = (id, xVal, yVal) => {
+        // Controls Setup
+        function setupControls() {
+            const bind = function(id, xVal, yVal) {
                 const el = document.getElementById(id);
                 if(!el) return;
-                el.addEventListener('touchstart', (e) => { moveInput.x = xVal; moveInput.y = yVal; e.preventDefault(); }, {passive: false});
-                el.addEventListener('touchend', (e) => { moveInput.x = 0; moveInput.y = 0; e.preventDefault(); }, {passive: false});
-                el.addEventListener('mousedown', () => { moveInput.x = xVal; moveInput.y = yVal; });
-                el.addEventListener('mouseup', () => { moveInput.x = 0; moveInput.y = 0; });
+                
+                const startMove = function(e) { moveInput.x = xVal; moveInput.y = yVal; if(e) e.preventDefault(); };
+                const endMove = function(e) { moveInput.x = 0; moveInput.y = 0; if(e) e.preventDefault(); };
+
+                el.addEventListener('touchstart', startMove, {passive: false});
+                el.addEventListener('touchend', endMove, {passive: false});
+                el.addEventListener('mousedown', startMove);
+                el.addEventListener('mouseup', endMove);
             };
 
             bind('j-up', 0, -1);
@@ -74,116 +78,170 @@
             bind('j-left', -1, 0);
             bind('j-right', 1, 0);
 
-            // Action Button (Enter / Exit)
+            // Action Button Click (Enter / Exit)
             const actionBtn = document.getElementById('action-btn');
-            actionBtn.addEventListener('click', () => {
+            actionBtn.addEventListener('click', function() {
                 if (!isDriving) {
                     isDriving = true;
                     actionBtn.innerText = "EXIT";
-                    actionBtn.style.background = "rgba(50, 150, 250, 0.95)";
+                    actionBtn.style.background = "#0066cc";
                 } else {
                     isDriving = false;
-                    // Step out right beside the car
-                    player.x = car.x - 35;
+                    // Step out right beside the car on the left
+                    player.x = car.x - 45;
                     player.y = car.y;
                     actionBtn.style.display = "none";
                     actionBtn.innerText = "ENTER";
-                    actionBtn.style.background = "rgba(220, 20, 60, 0.95)";
+                    actionBtn.style.background = "#cc0000";
                 }
             });
         }
-        setupJoystick();
+        setupControls();
 
-        // Main Game Loop
+        // Update Game Logic
         function update() {
-            const speed = 3.5;
+            const speed = 3.0;
+            const actionBtn = document.getElementById('action-btn');
+
+            if (moveInput.x !== 0 || moveInput.y !== 0) {
+                if (!isDriving) {
+                    player.angle = Math.atan2(moveInput.y, moveInput.x);
+                } else {
+                    car.angle = Math.atan2(moveInput.y, moveInput.x);
+                }
+            }
 
             if (!isDriving) {
                 player.x += moveInput.x * speed;
                 player.y += moveInput.y * speed;
 
-                // Keep player inside screen boundaries
+                // Screen boundaries
                 player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
                 player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
 
-                // Check distance to car to show "ENTER" button
+                // Check distance to car for ENTER prompt
                 const dx = player.x - car.x;
                 const dy = player.y - car.y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
 
-                const actionBtn = document.getElementById('action-btn');
-                if (dist < 60) {
+                if (dist < 65) {
                     actionBtn.style.display = "flex";
                     actionBtn.innerText = "ENTER";
+                    actionBtn.style.background = "#cc0000";
                 } else {
                     actionBtn.style.display = "none";
                 }
             } else {
-                // Drive car
-                car.x += moveInput.x * (speed * 1.6);
-                car.y += moveInput.y * (speed * 1.6);
+                // Drive car smoothly
+                const carSpeed = 4.5;
+                car.x += moveInput.x * carSpeed;
+                car.y += moveInput.y * carSpeed;
 
                 car.x = Math.max(30, Math.min(canvas.width - 30, car.x));
                 car.y = Math.max(30, Math.min(canvas.height - 30, car.y));
 
-                // Player follows car position invisibly
+                // Player stays inside car while driving
                 player.x = car.x;
                 player.y = car.y;
 
-                document.getElementById('action-btn').style.display = "flex";
+                actionBtn.style.display = "flex";
+                actionBtn.innerText = "EXIT";
+                actionBtn.style.background = "#0066cc";
             }
         }
 
+        // Render Graphics (Classic Retro 2D Style)
         function draw() {
-            // Clear Background (Grass / Island)
-            ctx.fillStyle = '#33cc33';
+            // Grass background
+            ctx.fillStyle = '#3a9d23';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Road across the map
-            ctx.fillStyle = '#222222';
-            ctx.fillRect(0, canvas.height / 2 - 45, canvas.width, 90);
-            
-            // Road Dashed Center Line
-            ctx.strokeStyle = '#ffff00';
+            // Asphalt Road running across the middle
+            ctx.fillStyle = '#333333';
+            ctx.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
+
+            // Road borders
+            ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 3;
-            ctx.setLineDash([15, 15]);
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2 - 50); ctx.lineTo(canvas.width, canvas.height / 2 - 50);
+            ctx.moveTo(0, canvas.height / 2 + 50); ctx.lineTo(canvas.width, canvas.height / 2 + 50);
+            ctx.stroke();
+
+            // Dashed yellow center line
+            ctx.strokeStyle = '#ffcc00';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([20, 20]);
             ctx.beginPath();
             ctx.moveTo(0, canvas.height / 2);
             ctx.lineTo(canvas.width, canvas.height / 2);
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Draw House (on the left side)
+            // Draw House (Left side)
             ctx.fillStyle = house.color;
             ctx.fillRect(house.x, house.y, house.w, house.h);
-            // Roof
+            ctx.strokeStyle = '#554422';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(house.x, house.y, house.w, house.h);
+
+            // House Roof
             ctx.fillStyle = house.roofColor;
             ctx.beginPath();
-            ctx.moveTo(house.x - 10, house.y);
-            ctx.lineTo(house.x + house.w / 2, house.y - 40);
-            ctx.lineTo(house.x + house.w + 10, house.y);
+            ctx.moveTo(house.x - 15, house.y);
+            ctx.lineTo(house.x + house.w / 2, house.y - 50);
+            ctx.lineTo(house.x + house.w + 15, house.y);
             ctx.closePath();
             ctx.fill();
 
-            // Draw Stylish Car (parked near the house)
+            // House Door & Windows
+            ctx.fillStyle = '#553311';
+            ctx.fillRect(house.x + house.w / 2 - 12, house.y + house.h - 35, 24, 35);
+            ctx.fillStyle = '#87ceeb';
+            ctx.fillRect(house.x + 15, house.y + 20, 20, 20);
+            ctx.fillRect(house.x + house.w - 35, house.y + 20, 20, 20);
+
+            // Draw Car (Top-down style)
             ctx.save();
             ctx.translate(car.x, car.y);
+            ctx.rotate(car.angle);
+            // Car Body
             ctx.fillStyle = car.color;
             ctx.fillRect(-car.w / 2, -car.h / 2, car.w, car.h);
+            ctx.strokeStyle = '#880000';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-car.w / 2, -car.h / 2, car.w, car.h);
             // Windshield
             ctx.fillStyle = '#111111';
-            ctx.fillRect(-car.w / 4, -car.h / 2 + 4, car.w / 2, car.h - 8);
+            ctx.fillRect(-5, -car.h / 2 + 6, 18, car.h - 12);
+            // Headlights
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(car.w / 2 - 4, -car.h / 2 + 3, 4, 6);
+            ctx.fillRect(car.w / 2 - 4, car.h / 2 - 9, 4, 6);
             ctx.restore();
 
             // Draw Human Player (if not driving)
             if (!isDriving) {
+                ctx.save();
+                ctx.translate(player.x, player.y);
+                ctx.rotate(player.angle);
+
+                // Body / Torso
                 ctx.fillStyle = player.color;
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+                ctx.arc(0, 0, 9, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = '#ffffff';
                 ctx.stroke();
+
+                // Head / Cap
+                ctx.fillStyle = '#ffdbac';
+                ctx.beginPath();
+                ctx.arc(4, 0, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
             }
         }
 
