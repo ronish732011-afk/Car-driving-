@@ -3,529 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Open World - RONISH Gaming</title>
+    <title>Mini Open World Game</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; user-select: none; -webkit-user-select: none; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; }
+        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
-        #orientation-warning {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #050510;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            color: #FFD700;
-            font-family: 'Segoe UI', sans-serif;
-            text-align: center;
-            padding: 20px;
+        /* Joystick styling */
+        #joystick-base {
+            position: absolute; bottom: 40px; left: 40px;
+            width: 120px; height: 120px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            pointer-events: auto;
         }
-        #orientation-warning h1 { font-size: 1.8rem; margin-bottom: 10px; }
-        #orientation-warning p { color: #aaa; font-size: 1rem; }
-
-        @media screen and (orientation: portrait) {
-            #orientation-warning { display: flex; }
-        }
-
-        .controls-container {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 40px;
-            box-sizing: border-box;
-            z-index: 10;
+        #joystick-stick {
+            position: absolute; top: 35px; left: 35px;
+            width: 50px; height: 50px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
             pointer-events: none;
         }
-        .steering-group {
-            display: flex;
-            gap: 15px;
-            pointer-events: auto;
-            align-self: flex-end;
-        }
-        .pedals-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            pointer-events: auto;
-            align-items: flex-end;
-        }
-        
-        .steer-btn {
-            width: 70px;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            color: #ffffff;
-            font-size: 1.4rem;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            outline: none;
-            backdrop-filter: blur(4px);
-            -webkit-tap-highlight-color: transparent;
-        }
-        .steer-btn:active {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0.92);
-        }
 
-        .pedal-btn {
-            width: 60px;
-            height: 48px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            color: #ffffff;
-            font-size: 0.75rem;
-            font-weight: bold;
-            border-radius: 6px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            outline: none;
-            backdrop-filter: blur(4px);
-            -webkit-tap-highlight-color: transparent;
-            text-transform: uppercase;
+        /* Action Button */
+        #action-btn {
+            position: absolute; bottom: 50px; right: 40px;
+            padding: 18px 28px; font-size: 18px; font-weight: bold;
+            background: #ffcc00; color: #000; border: none; border-radius: 12px;
+            display: none; pointer-events: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .pedal-btn:active {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0.95);
-        }
-
-        #hud {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            display: flex;
-            gap: 15px;
-            z-index: 10;
-        }
-        .hud-box {
-            color: #FFD700;
-            background: rgba(0,0,0,0.7);
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-family: 'Segoe UI', sans-serif;
-            font-weight: bold;
-            border: 1px solid #FFD700;
-            font-size: 0.9rem;
-        }
-
-        #interaction-prompt {
-            position: absolute;
-            bottom: 110px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #FFD700;
-            background: rgba(0,0,0,0.8);
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-family: 'Segoe UI', sans-serif;
-            font-weight: bold;
-            font-size: 1rem;
-            border: 1px solid #FFD700;
-            display: none;
-            z-index: 10;
-        }
-        
-        #audio-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 999;
-            color: #FFD700;
-            font-family: 'Segoe UI', sans-serif;
-            text-align: center;
-            cursor: pointer;
-        }
-        #audio-overlay h1 { margin-bottom: 10px; font-size: 2rem; }
-        #audio-overlay p { color: #ccc; font-size: 1rem; }
     </style>
 </head>
 <body>
 
-    <div id="orientation-warning">
-        <h1>📱 Rotate Your Phone</h1>
-        <p>Please hold your phone horizontally to play RONISH Gaming Open World!</p>
-    </div>
-
-    <div id="audio-overlay" onclick="initAudio()">
-        <h1>RONISH Gaming - Open World</h1>
-        <p>🔊 Tap anywhere to start engine audio & play!</p>
-    </div>
-
-    <div id="hud">
-        <div class="hud-box" id="timeDisplay">TIME: DAY</div>
-        <div class="hud-box" id="speedometer">SPEED: 0 MPH</div>
-    </div>
-
-    <div id="interaction-prompt">Press [F] to Enter Car</div>
-
-    <div class="controls-container">
-        <div class="steering-group">
-            <button class="steer-btn" id="leftBtn">◀</button>
-            <button class="steer-btn" id="rightBtn">▶</button>
+    <div id="ui">
+        <div id="joystick-base">
+            <div id="joystick-stick"></div>
         </div>
-        <div class="pedals-group">
-            <button class="pedal-btn" id="accelBtn">GAS</button>
-            <button class="pedal-btn" id="brakeBtn">BRAKE</button>
-            <button class="pedal-btn" id="revBtn">REV</button>
-        </div>
+        <button id="action-btn">Enter Car</button>
     </div>
 
-    <!-- Include Three.js -->
+    <!-- Three.js Library from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // Web Audio Synth
-        let audioCtx = null;
-        let engineOsc = null;
-        let engineGain = null;
-        let soundInitialized = false;
-
-        function initAudio() {
-            if (soundInitialized) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            engineOsc = audioCtx.createOscillator();
-            engineOsc.type = 'sawtooth';
-            engineOsc.frequency.setValueAtTime(55, audioCtx.currentTime);
-
-            engineGain = audioCtx.createGain();
-            engineGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(350, audioCtx.currentTime);
-
-            engineOsc.connect(filter);
-            filter.connect(engineGain);
-            engineGain.connect(audioCtx.destination);
-            engineOsc.start();
-
-            soundInitialized = true;
-            document.getElementById('audio-overlay').style.display = 'none';
-        }
-
-        function playBrakeScreech() {
-            if (!soundInitialized || !audioCtx) return;
-            const bufferSize = audioCtx.sampleRate * 0.15;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.setValueAtTime(1400, audioCtx.currentTime);
-            filter.Q.setValueAtTime(4, audioCtx.currentTime);
-
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-
-            noise.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-            noise.start();
-        }
-
-        // Three.js Setup
+        // --- 1. SETUP SCENE, CAMERA, RENDERER ---
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x70b5ff);
+        scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambientLight);
-        
-        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        dirLight.position.set(40, 80, 40);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(20, 40, 20);
         scene.add(dirLight);
 
-        // --- ISLAND & OCEAN ---
-        const oceanMat = new THREE.MeshStandardMaterial({ color: 0x1e90ff, roughness: 0.1 });
-        const ocean = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), oceanMat);
-        ocean.rotation.x = -Math.PI / 2;
-        ocean.position.y = -0.5;
-        scene.add(ocean);
+        // --- 2. ENVIRONMENT (Island & Water) ---
+        // Sea
+        const seaGeo = new THREE.PlaneGeometry(500, 500);
+        const seaMat = new THREE.MeshBasicMaterial({ color: 0x1e90ff });
+        const sea = new THREE.Mesh(seaGeo, seaMat);
+        sea.rotation.x = -Math.PI / 2;
+        sea.position.y = -0.5;
+        scene.add(sea);
 
-        const islandMat = new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.9 });
-        const island = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), islandMat);
-        island.rotation.x = -Math.PI / 2;
-        island.position.y = 0;
+        // Island
+        const islandGeo = new THREE.CylinderGeometry(60, 60, 1, 32);
+        const islandMat = new THREE.MeshBasicMaterial({ color: 0x557a2b }); // Grass green
+        const island = new THREE.Mesh(islandGeo, islandMat);
+        island.position.y = -0.5;
         scene.add(island);
 
-        // --- ROADS ---
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x181818, roughness: 0.9 });
-        const mainRoadX = new THREE.Mesh(new THREE.PlaneGeometry(300, 24), roadMat);
-        mainRoadX.rotation.x = -Math.PI / 2;
-        mainRoadX.position.y = 0.01;
-        scene.add(mainRoadX);
+        // House
+        const houseGeo = new THREE.BoxGeometry(6, 4, 6);
+        const houseMat = new THREE.MeshLambertMaterial({ color: 0xd9d9d9 });
+        const house = new THREE.Mesh(houseGeo, houseMat);
+        house.position.set(0, 2, -10);
+        scene.add(house);
 
-        const mainRoadZ = new THREE.Mesh(new THREE.PlaneGeometry(24, 300), roadMat);
-        mainRoadZ.rotation.x = -Math.PI / 2;
-        mainRoadZ.position.y = 0.02;
-        scene.add(mainRoadZ);
+        // House Roof
+        const roofGeo = new THREE.ConeGeometry(5, 3, 4);
+        const roofMat = new THREE.MeshLambertMaterial({ color: 0xb22222 });
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.set(0, 5.5, -10);
+        roof.rotation.y = Math.PI / 4;
+        scene.add(roof);
 
-        // --- PLAYER HOME (Center of Island) ---
-        const houseGroup = new THREE.Group();
-        const wallMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.7 });
-        const houseWalls = new THREE.Mesh(new THREE.BoxGeometry(10, 6, 10), wallMat);
-        houseWalls.position.y = 3;
-        houseGroup.add(houseWalls);
+        // --- 3. PLAYER & SPORTS CAR ---
+        // Player (Minecraft-style blocky character)
+        const playerGeo = new THREE.BoxGeometry(1, 2, 1);
+        const playerMat = new THREE.MeshLambertMaterial({ color: 0x0055ff });
+        const player = new THREE.Mesh(playerGeo, playerMat);
+        player.position.set(0, 1, 0); // Spawn in front of the house
+        scene.add(player);
 
-        const roofMat = new THREE.MeshStandardMaterial({ color: 0xb22222, roughness: 0.5 });
-        const houseRoof = new THREE.Mesh(new THREE.ConeGeometry(8, 4, 4), roofMat);
-        houseRoof.position.y = 8;
-        houseRoof.rotation.y = Math.PI / 4;
-        houseGroup.add(houseRoof);
-
-        // Position home right near the center crossroad
-        houseGroup.position.set(-20, 0, -20);
-        scene.add(houseGroup);
-
-        // --- REALISTIC 3D WHITE & CARBON SPORTS CAR (Parked on Right Side of Road) ---
+        // Sports Car (Placed on the right side of the house)
         const carGroup = new THREE.Group();
-        const whiteCarMat = new THREE.MeshStandardMaterial({ color: 0xf0f0f0, metalness: 0.3, roughness: 0.2 });
-        const carbonMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.4 });
-        const glassMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9, roughness: 0.1 });
-
-        const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.45, 4.4), whiteCarMat);
-        lowerBody.position.y = 0.4;
-        carGroup.add(lowerBody);
-
-        const hood = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.25, 1.5), carbonMat);
-        hood.position.set(0, 0.55, 1.3);
-        hood.rotation.x = -0.15;
-        carGroup.add(hood);
-
-        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 2.1), glassMat);
-        cabin.position.set(0, 0.85, -0.2);
-        carGroup.add(cabin);
-
-        const spoilerWing = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.08, 0.5), carbonMat);
-        spoilerWing.position.set(0, 1.05, -1.9);
-        carGroup.add(spoilerWing);
-
-        const lightGeo = new THREE.BoxGeometry(0.35, 0.15, 0.1);
-        const headLightMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+        const carBodyGeo = new THREE.BoxGeometry(2, 1, 4);
+        const carBodyMat = new THREE.MeshLambertMaterial({ color: 0xff0000 }); // Bright Red Sports Car
+        const carBody = new THREE.Mesh(carBodyGeo, carBodyMat);
+        carBody.position.y = 0.5;
+        carGroup.add(carBody);
         
-        const leftHead = new THREE.Mesh(lightGeo, headLightMat);
-        leftHead.position.set(-0.75, 0.45, 2.22);
-        carGroup.add(leftHead);
-        const rightHead = new THREE.Mesh(lightGeo, headLightMat);
-        rightHead.position.set(0.75, 0.45, 2.22);
-        carGroup.add(rightHead);
-
-        const carSpotLight = new THREE.SpotLight(0xffffff, 0, 50, Math.PI / 4, 0.5, 2);
-        carSpotLight.position.set(0, 0.8, 2.2);
-        carSpotLight.target.position.set(0, 0, 10);
-        carGroup.add(carSpotLight);
-        carGroup.add(carSpotLight.target);
-
-        const brakeLightMat = new THREE.MeshBasicMaterial({ color: 0x330000 });
-        const leftBrake = new THREE.Mesh(lightGeo, brakeLightMat);
-        leftBrake.position.set(-0.75, 0.45, -2.22);
-        carGroup.add(leftBrake);
-        const rightBrake = new THREE.Mesh(lightGeo, brakeLightMat);
-        rightBrake.position.set(0.75, 0.45, -2.22);
-        carGroup.add(rightBrake);
-
-        const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.3, 16);
-        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.9 });
-        [[ -1.1, 0.4, 1.4 ], [ 1.1, 0.4, 1.4 ], [ -1.1, 0.4, -1.4 ], [ 1.1, 0.4, -1.4 ]].forEach(pos => {
-            const w = new THREE.Mesh(wheelGeo, wheelMat);
-            w.rotation.z = Math.PI / 2;
-            w.position.set(...pos);
-            carGroup.add(w);
-        });
-
-        // Parked on the right side of the horizontal road near home
-        carGroup.position.set(16, 0, 5);
-        carGroup.rotation.y = Math.PI / 2;
+        carGroup.position.set(8, 0, -8);
         scene.add(carGroup);
 
-        // --- PLAYER CHARACTER (Spawn outside home) ---
-        const playerGroup = new THREE.Group();
-        const playerMat = new THREE.MeshStandardMaterial({ color: 0xe53e3e });
-        const playerBody = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.6, 0.6), playerMat);
-        playerBody.position.y = 0.8;
-        playerGroup.add(playerBody);
-
-        // Spawn player right near home
-        playerGroup.position.set(-5, 0, 5);
-        scene.add(playerGroup);
-
-        // Game State
-        let inCar = false;
-        let speed = 0;
-        let steering = 0;
+        // --- 4. GAME VARIABLES & CONTROLS ---
+        let isInCar = false;
+        let moveX = 0, moveY = 0; // Joystick vector values (-1 to 1)
+        
         let playerSpeed = 0.15;
-        const keys = {};
+        let carSpeed = 0;
+        let carRotation = 0;
 
-        window.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
-            keys[key] = true;
-            if (key === 'f') {
-                toggleCarEntry();
-            }
-        });
-        window.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
+        // Touch Joystick Logic
+        const base = document.getElementById('joystick-base');
+        const stick = document.getElementById('joystick-stick');
+        let touching = false;
+        let baseRect = base.getBoundingClientRect();
+
+        base.addEventListener('touchstart', (e) => { touching = true; handleTouch(e); });
+        window.addEventListener('touchmove', (e) => { if (touching) handleTouch(e); });
+        window.addEventListener('touchend', () => {
+            touching = false;
+            moveX = 0; moveY = 0;
+            stick.style.transform = `translate(0px, 0px)`;
         });
 
-        function toggleCarEntry() {
-            let dist = playerGroup.position.distanceTo(carGroup.position);
-            if (!inCar && dist < 6) {
-                inCar = true;
-                playerGroup.visible = false;
-                document.getElementById('interaction-prompt').innerText = "Press [F] to Exit Car";
-            } else if (inCar) {
-                inCar = false;
-                playerGroup.visible = true;
-                // Step out to the side of the car
-                playerGroup.position.set(carGroup.position.x - 3, 0, carGroup.position.z);
-                document.getElementById('interaction-prompt').style.display = 'none';
+        function handleTouch(e) {
+            baseRect = base.getBoundingClientRect();
+            let touch = e.touches[0];
+            let centerX = baseRect.left + baseRect.width / 2;
+            let centerY = baseRect.top + baseRect.height / 2;
+            
+            let dx = touch.clientX - centerX;
+            let dy = touch.clientY - centerY;
+            let distance = Math.hypot(dx, dy);
+            let maxDist = 40;
+
+            if (distance > maxDist) {
+                dx = (dx / distance) * maxDist;
+                dy = (dy / distance) * maxDist;
             }
+
+            stick.style.transform = `translate(${dx}px, ${dy}px)`;
+            moveX = dx / maxDist;
+            moveY = -dy / maxDist; // Invert Y for forward movement
         }
 
-        function bindTouch(id, keyName) {
-            const btn = document.getElementById(id);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
-            btn.addEventListener('mousedown', () => keys[keyName] = true);
-            btn.addEventListener('mouseup', () => keys[keyName] = false);
-        }
+        // Action Button (Enter / Exit Car)
+        const actionBtn = document.getElementById('action-btn');
+        actionBtn.addEventListener('click', () => {
+            isInCar = !isInCar;
+            if (isInCar) {
+                actionBtn.innerText = "Exit Car";
+                player.visible = false; // Hide player inside car
+            } else {
+                actionBtn.innerText = "Enter Car";
+                player.visible = true;
+                // Position player right outside the car door
+                player.position.set(carGroup.position.x - 2, 1, carGroup.position.z);
+            }
+        });
 
-        bindTouch('leftBtn', 'a');
-        bindTouch('rightBtn', 'd');
-        bindTouch('accelBtn', 'w');
-        bindTouch('brakeBtn', 's');
-        bindTouch('revBtn', 'r');
-
-        let gameTimeSeconds = 0;
-
-        // Game Loop
+        // --- 5. GAME LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
-            // Day/Night Cycle
-            gameTimeSeconds += 0.016;
-            const cycleProgress = (gameTimeSeconds % 600) / 600;
-            const isNight = cycleProgress >= 0.5;
-            
-            document.getElementById('timeDisplay').innerText = isNight ? "TIME: NIGHT" : "TIME: DAY";
-
-            if (isNight) {
-                scene.background.setHex(0x050510);
-                dirLight.color.setHex(0x4466aa);
-                dirLight.intensity = 0.2;
-                ambientLight.intensity = 0.2;
-                headLightMat.color.setHex(0xffffff);
-                carSpotLight.intensity = 3.0;
-            } else {
-                scene.background.setHex(0x70b5ff);
-                dirLight.color.setHex(0xffffff);
-                dirLight.intensity = 1.2;
-                ambientLight.intensity = 0.8;
-                headLightMat.color.setHex(0x333333);
-                carSpotLight.intensity = 0;
-            }
-
-            if (!inCar) {
-                // --- PLAYER WALKING CONTROLS ---
-                let pDx = 0, pDz = 0;
-                if (keys['w'] || keys['arrowup']) pDz -= 1;
-                if (keys['s'] || keys['arrowdown']) pDz += 1;
-                if (keys['a'] || keys['arrowleft']) pDx -= 1;
-                if (keys['d'] || keys['arrowright']) pDx += 1;
-
-                if (pDx !== 0 || pDz !== 0) {
-                    playerGroup.position.x += pDx * playerSpeed;
-                    playerGroup.position.z += pDz * playerSpeed;
-                    playerGroup.rotation.y = Math.atan2(pDx, pDz);
+            if (!isInCar) {
+                // --- Walking Controls ---
+                if (moveX !== 0 || moveY !== 0) {
+                    player.position.x += moveX * playerSpeed;
+                    player.position.z -= moveY * playerSpeed;
+                    
+                    // Face movement direction
+                    player.rotation.y = Math.atan2(moveX, moveY);
                 }
 
-                // Check distance to car to show interaction prompt
-                let distToCar = playerGroup.position.distanceTo(carGroup.position);
-                const prompt = document.getElementById('interaction-prompt');
-                if (distToCar < 6) {
-                    prompt.style.display = 'block';
-                    prompt.innerText = "Press [F] to Enter Car";
+                // Check distance to car for entering
+                let distToCar = player.position.distanceTo(carGroup.position);
+                if (distToCar < 4.0) {
+                    actionBtn.style.display = "block";
                 } else {
-                    prompt.style.display = 'none';
+                    actionBtn.style.display = "none";
                 }
 
                 // Camera follow player
-                camera.position.set(playerGroup.position.x, playerGroup.position.y + 5, playerGroup.position.z - 8);
-                camera.lookAt(playerGroup.position);
-
-                document.getElementById('speedometer').innerText = "SPEED: WALKING";
+                camera.position.set(player.position.x, player.position.y + 6, player.position.z + 10);
+                camera.lookAt(player.position);
 
             } else {
-                // --- CAR DRIVING CONTROLS ---
-                let isBraking = false;
-
-                if (keys['w'] || keys['arrowup']) {
-                    speed = Math.min(speed + 0.025, 0.95);
-                } else if (keys['s'] || keys['arrowdown']) {
-                    if (speed > 0.02) {
-                        speed = Math.max(speed - 0.04, 0);
-                        isBraking = true;
-                        playBrakeScreech();
-                    } else {
-                        speed = Math.max(speed - 0.02, -0.3);
-                    }
-                } else if (keys['r']) {
-                    speed = Math.max(speed - 0.02, -0.4);
-                } else {
-                    speed *= 0.95;
+                // --- Driving Controls ---
+                carSpeed = moveY * 0.3; // Throttle
+                if (moveX !== 0 && carSpeed !== 0) {
+                    carRotation -= moveX * 0.04 * Math.sign(carSpeed);
+                    carGroup.rotation.y = carRotation;
                 }
 
-                if (soundInitialized && engineOsc && audioCtx) {
-                    const targetFreq = 55 + Math.abs(speed) * 280;
-                    engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
-                    engineGain.gain.setTargetAtTime(0.015 + Math.abs(speed) * 0.055, audioCtx.currentTime, 0.1);
-                }
+                // Move car forward based on its rotation angle
+                carGroup.position.x += Math.sin(carRotation) * carSpeed;
+                carGroup.position.z += Math.cos(carRotation) * carSpeed;
 
-                if (isBraking) {
-                    brakeLightMat.color.setHex(0xff0000);
-                } else {
-                    brakeLightMat.color.setHex(0x330000);
-                }
-
-                if (keys['a'] || keys['arrowleft']) steering = 0.045;
-                else if (keys['d'] || keys['arrowright']) steering = -0.045;
-                else steering = 0;
-
-                carGroup.rotation.y += steering * (speed * 1.5);
-                carGroup.translateZ(speed);
-
-                document.getElementById('speedometer').innerText = `SPEED: ${Math.round(Math.abs(speed) * 120)} MPH`;
-
-                // Smooth Camera Follow Car
-                const offset = new THREE.Vector3(0, 3.3, -7.5).applyAxisAngle(new THREE.Vector3(0, 1, 0), carGroup.rotation.y);
-                camera.position.copy(carGroup.position).add(offset);
+                // Camera follow car
+                let camOffsetX = -Math.sin(carRotation) * 10;
+                let camOffsetZ = -Math.cos(carRotation) * 10;
+                camera.position.set(carGroup.position.x + camOffsetX, carGroup.position.y + 5, carGroup.position.z + camOffsetZ);
                 camera.lookAt(carGroup.position);
             }
+
+            // Keep entities inside island boundaries
+            if (player.position.length() > 55) player.position.clampLength(0, 55);
+            if (carGroup.position.length() > 55) carGroup.position.clampLength(0, 55);
 
             renderer.render(scene, camera);
         }
 
         animate();
 
+        // Handle window resizing
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
