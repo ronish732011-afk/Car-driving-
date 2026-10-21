@@ -3,11 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Open World 3D - Ultimate Edition</title>
+    <title>Open World 3D - GTA V Vibe Edition</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; }
         #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
+        /* GTA Style HUD Overlay */
+        #minimap {
+            position: absolute; top: 15px; left: 15px;
+            width: 140px; height: 100px;
+            background: rgba(20, 30, 40, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 6px;
+        }
+        #hud-stats {
+            position: absolute; top: 15px; right: 15px;
+            text-align: right; color: white; font-weight: bold; font-size: 13px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        .bar-container { width: 120px; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; margin-top: 4px; display: inline-block; overflow: hidden; border: 1px solid rgba(255,255,255,0.3); }
+        .health-fill { width: 100%; height: 100%; background: #2ecc71; }
+        .armor-fill { width: 80%; height: 100%; background: #3498db; }
+
         /* Joystick styling (Left) */
         #joystick-base {
             position: absolute; bottom: 40px; left: 40px;
@@ -31,22 +48,26 @@
             background: #ffcc00; color: #000; border: none; border-radius: 12px;
             display: none; pointer-events: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-
-        /* Camera Touch Area Indicator */
-        #camera-hint {
-            position: absolute; top: 20px; right: 20px; color: white; background: rgba(0,0,0,0.4);
-            padding: 8px 12px; border-radius: 8px; font-size: 12px; pointer-events: none;
-        }
     </style>
 </head>
 <body>
 
     <div id="ui">
+        <!-- Mini Map Mockup -->
+        <div id="minimap"></div>
+
+        <!-- Stats & Weapon HUD -->
+        <div id="hud-stats">
+            <div>HEALTH <div class="bar-container"><div class="health-fill"></div></div></div>
+            <div>ARMOR <div class="bar-container"><div class="armor-fill"></div></div></div>
+            <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$8,450,210</div>
+            <div style="margin-top: 10px; font-size: 14px;">AMMO 45/180</div>
+        </div>
+
         <div id="joystick-base">
             <div id="joystick-stick"></div>
         </div>
         <button id="action-btn">Enter</button>
-        <div id="camera-hint">Swipe screen to look around</div>
     </div>
 
     <!-- Three.js Library from CDN -->
@@ -62,174 +83,135 @@
         document.body.appendChild(renderer.domElement);
 
         // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
         dirLight.position.set(50, 100, 50);
         scene.add(dirLight);
 
-        // --- 2. ENVIRONMENT (Huge Organic Island, Sandy Beach & Sea) ---
-        // Vast Sea
-        const seaGeo = new THREE.PlaneGeometry(1500, 1500);
-        const seaMat = new THREE.MeshBasicMaterial({ color: 0x1e90ff });
-        const sea = new THREE.Mesh(seaGeo, seaMat);
-        sea.rotation.x = -Math.PI / 2;
-        sea.position.y = -0.6;
-        scene.add(sea);
+        // --- 2. ENVIRONMENT & LOS SANTOS VIBE CITY ---
+        // Sea & Beach
+        const sea = new THREE.Mesh(new THREE.PlaneGeometry(1800, 1800), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
+        sea.rotation.x = -Math.PI / 2; sea.position.y = -0.6; scene.add(sea);
 
-        // Big Sandy Beach Ring (Outer edge)
-        const beachGeo = new THREE.CylinderGeometry(130, 140, 0.9, 32);
-        const beachMat = new THREE.MeshLambertMaterial({ color: 0xf4d06f }); // Sand color
-        const beach = new THREE.Mesh(beachGeo, beachMat);
-        beach.position.y = -0.55;
-        scene.add(beach);
+        const beach = new THREE.Mesh(new THREE.CylinderGeometry(150, 160, 0.9, 32), new THREE.MeshLambertMaterial({ color: 0xf4d06f }));
+        beach.position.y = -0.55; scene.add(beach);
 
-        // Huge Main Grass Island (Irregular shape via multi-cylinders)
-        const islandGroup = new THREE.Group();
-        const mainIslandGeo = new THREE.CylinderGeometry(110, 125, 1, 32);
-        const islandMat = new THREE.MeshLambertMaterial({ color: 0x4a7c23 }); // Grass green
-        const mainIsland = new THREE.Mesh(mainIslandGeo, islandMat);
-        mainIsland.position.y = -0.5;
-        islandGroup.add(mainIsland);
+        // Ground / City Blocks Base
+        const islandMat = new THREE.MeshLambertMaterial({ color: 0x555555 }); // Pavement gray
+        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(130, 140, 1, 32), islandMat);
+        mainIsland.position.y = -0.5; scene.add(mainIsland);
 
-        // Side extensions for organic layout
-        const ext1 = new THREE.Mesh(new THREE.CylinderGeometry(60, 70, 1, 16), islandMat);
-        ext1.position.set(80, -0.5, 40);
-        islandGroup.add(ext1);
+        // --- HIGHWAYS & ROADS ---
+        const roadMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a }); 
+        const road1 = new THREE.Mesh(new THREE.BoxGeometry(260, 0.06, 14), roadMat); road1.position.set(0, -0.47, 0); scene.add(road1);
+        const road2 = new THREE.Mesh(new THREE.BoxGeometry(14, 0.06, 260), roadMat); road2.position.set(0, -0.46, 0); scene.add(road2);
 
-        const ext2 = new THREE.Mesh(new THREE.CylinderGeometry(55, 65, 1, 16), islandMat);
-        ext2.position.set(-85, -0.5, -60);
-        islandGroup.add(ext2);
-        scene.add(islandGroup);
-
-        // --- 3. ROADS & BUILDINGS (With Collision Data) ---
-        const roadMat = new THREE.MeshBasicMaterial({ color: 0x222222 }); 
-        const road1 = new THREE.Mesh(new THREE.BoxGeometry(220, 0.05, 12), roadMat);
-        road1.position.set(0, -0.48, 0);
-        scene.add(road1);
-
-        const road2 = new THREE.Mesh(new THREE.BoxGeometry(12, 0.05, 220), roadMat);
-        road2.position.set(0, -0.47, 0);
-        scene.add(road2);
-
-        // Buildings List for Collision Checking
+        // Buildings & Skyscrapers with Collision List
         const buildings = [];
-        function createBuilding(x, z, w, h, d) {
-            const bMat = new THREE.MeshLambertMaterial({ color: 0x8899aa });
+        function createBuilding(x, z, w, h, d, colorHex) {
+            const bMat = new THREE.MeshLambertMaterial({ color: colorHex || 0x7f8c8d });
             const bGeo = new THREE.BoxGeometry(w, h, d);
             const building = new THREE.Mesh(bGeo, bMat);
             building.position.set(x, h/2 - 0.5, z);
             scene.add(building);
-            
-            // Store bounding box data for collision detection
             buildings.push({ x, z, w: w + 1, d: d + 1 });
         }
 
-        // Generate City Grid
-        for (let x = -70; x <= 70; x += 22) {
-            if (Math.abs(x) < 15) continue;
-            createBuilding(x, -30, 14, 18 + Math.random() * 12, 14);
-            createBuilding(x, 30, 14, 15 + Math.random() * 15, 14);
+        // Generate Tall Skyscrapers (Vinewood / Downtown Vibe)
+        for (let x = -90; x <= 90; x += 25) {
+            if (Math.abs(x) < 18) continue;
+            createBuilding(x, -35, 16, 35 + Math.random() * 25, 16, 0x95a5a6);
+            createBuilding(x, 35, 16, 25 + Math.random() * 30, 16, 0xbdc3c7);
         }
-        for (let z = -70; z <= 70; z += 22) {
-            if (Math.abs(z) < 15) continue;
-            createBuilding(-30, z, 14, 20 + Math.random() * 10, 14);
-            createBuilding(30, z, 14, 16 + Math.random() * 14, 14);
+        for (let z = -90; z <= 90; z += 25) {
+            if (Math.abs(z) < 18) continue;
+            createBuilding(-35, z, 16, 30 + Math.random() * 20, 16, 0x7f8c8d);
+            createBuilding(35, z, 16, 40 + Math.random() * 15, 16, 0x95a5a6);
         }
 
-        // Trees on Island
-        const treeTrunkMat = new THREE.MeshLambertMaterial({ color: 0x8b5a2b });
-        const treeLeavesMat = new THREE.MeshLambertMaterial({ color: 0x2e8b57 });
-        function createTree(x, z) {
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 3), treeTrunkMat);
-            trunk.position.set(x, 1, z);
-            scene.add(trunk);
-            const leaves = new THREE.Mesh(new THREE.ConeGeometry(2, 4, 6), treeLeavesMat);
-            leaves.position.set(x, 3.5, z);
-            scene.add(leaves);
+        // Palm Trees along streets
+        function createPalmTree(x, z) {
+            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 5), new THREE.MeshLambertMaterial({ color: 0x8b5a2b }));
+            trunk.position.set(x, 2, z); scene.add(trunk);
+            const leaves = new THREE.Mesh(new THREE.ConeGeometry(3, 3, 5), new THREE.MeshLambertMaterial({ color: 0x27ae60 }));
+            leaves.position.set(x, 5, z); scene.add(leaves);
         }
-        createTree(-25, -25); createTree(25, -25); createTree(-25, 25); createTree(45, 45);
+        createPalmTree(-10, -10); createPalmTree(10, -10); createPalmTree(-10, 10); createPalmTree(10, 10);
 
-        // Distant Cargo Ships in the Sea
-        const shipMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
-        function createShip(x, z) {
-            const ship = new THREE.Mesh(new THREE.BoxGeometry(15, 6, 40), shipMat);
-            ship.position.set(x, 2.5, z);
-            scene.add(ship);
+        // --- 3. TRAFFIC CARS & NPC PEDESTRIANS (AI Simulation) ---
+        const npcCars = [];
+        const npcPeople = [];
+
+        function spawnTrafficCar(x, z, color, speed) {
+            const car = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.9, 4.0), new THREE.MeshLambertMaterial({ color }));
+            car.position.set(x, 0.45, z);
+            scene.add(car);
+            npcCars.push({ mesh: car, zMin: -120, zMax: 120, speed });
         }
-        createShip(300, 250); createShip(-350, -300);
+        spawnTrafficCar(-4, 20, 0xe74c3c, 0.4); // Red Sedan
+        spawnTrafficCar(4, -40, 0xf1c40f, 0.5); // Yellow Taxi
+        spawnTrafficCar(-4, 60, 0x34495e, 0.35); // Dark SUV
 
-        // Player House
-        const house = new THREE.Mesh(new THREE.BoxGeometry(8, 5, 8), new THREE.MeshLambertMaterial({ color: 0xd9d9d9 }));
-        house.position.set(-35, 2.5, -35);
-        scene.add(house);
-        buildings.push({ x: -35, z: -35, w: 9, d: 9 });
+        function spawnPedestrian(x, z) {
+            const person = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.6, 0.6), new THREE.MeshLambertMaterial({ color: 0xe67e22 }));
+            person.position.set(x, 0.8, z);
+            scene.add(person);
+            npcPeople.push({ mesh: person, xMin: x - 5, xMax: x + 5, speed: 0.05, dir: 1 });
+        }
+        spawnPedestrian(-12, -5); spawnPedestrian(12, 15); spawnPedestrian(-15, 25);
 
-        // --- 4. DETAILED BLOCKY CHARACTER ---
+        // --- 4. PLAYER CHARACTER & VEHICLES ---
         const playerGroup = new THREE.Group();
-        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.4), new THREE.MeshLambertMaterial({ color: 0x222222 }));
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.4), new THREE.MeshLambertMaterial({ color: 0x2c3e50 })); // Tactical jacket
         torso.position.y = 1.1; playerGroup.add(torso);
         const head = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.6), new THREE.MeshLambertMaterial({ color: 0xffdbac }));
         head.position.y = 1.8; playerGroup.add(head);
         
         const armGeo = new THREE.BoxGeometry(0.25, 0.9, 0.3);
-        const armMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+        const armMat = new THREE.MeshLambertMaterial({ color: 0x2c3e50 });
         const leftArm = new THREE.Mesh(armGeo, armMat); leftArm.position.set(-0.55, 1.1, 0); playerGroup.add(leftArm);
         const rightArm = new THREE.Mesh(armGeo, armMat); rightArm.position.set(0.55, 1.1, 0); playerGroup.add(rightArm);
         
         const legGeo = new THREE.BoxGeometry(0.3, 0.9, 0.3);
-        const legMat = new THREE.MeshLambertMaterial({ color: 0x111155 });
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x1a252f });
         const leftLeg = new THREE.Mesh(legGeo, legMat); leftLeg.position.set(-0.2, 0.45, 0); playerGroup.add(leftLeg);
         const rightLeg = new THREE.Mesh(legGeo, legMat); rightLeg.position.set(0.2, 0.45, 0); playerGroup.add(rightLeg);
 
         playerGroup.position.set(-15, 0, -15);
         scene.add(playerGroup);
 
-        // --- 5. SPORTS CAR ---
+        // Sports Car (Parked on Street)
         const carGroup = new THREE.Group();
-        const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 4.2), new THREE.MeshLambertMaterial({ color: 0xff0055 }));
+        const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 4.2), new THREE.MeshLambertMaterial({ color: 0xd35400 }));
         carBody.position.y = 0.6; carGroup.add(carBody);
-        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 2.2), new THREE.MeshLambertMaterial({ color: 0x222222 }));
+        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 2.2), new THREE.MeshLambertMaterial({ color: 0x111111 }));
         cabin.position.set(0, 1.2, -0.2); carGroup.add(cabin);
-
-        const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
-        const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
-        const wheels = [];
-        [[-1.1, 0.35, 1.4], [1.1, 0.35, 1.4], [-1.1, 0.35, -1.4], [1.1, 0.35, -1.4]].forEach(pos => {
-            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-            wheel.rotation.z = Math.PI / 2;
-            wheel.position.set(...pos); carGroup.add(wheel); wheels.push(wheel);
-        });
-        carGroup.position.set(15, 0, 15);
+        carGroup.position.set(15, 0, 10);
         scene.add(carGroup);
 
-        // --- 6. REAL SPEED BOAT (On Water Shore) ---
+        // Speed Boat (Water Shore)
         const boatGroup = new THREE.Group();
-        const boatHull = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 5.0), new THREE.MeshLambertMaterial({ color: 0x0044cc })); // Blue Speedboat
+        const boatHull = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 5.0), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
         boatHull.position.y = 0.3; boatGroup.add(boatHull);
-        const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 0.8), new THREE.MeshBasicMaterial({ color: 0x88ccff }));
-        windshield.position.set(0, 0.7, 0.5); boatGroup.add(windshield);
-        
-        boatGroup.position.set(135, -0.2, 0); // Positioned right at the edge of the water/beach
+        boatGroup.position.set(150, -0.2, 0);
         scene.add(boatGroup);
 
-        // --- 7. GAME CONTROLS & FREE FIRE STYLE CAMERA DRAG ---
+        // --- 5. CONTROLS & TOUCH LOGIC ---
         let vehicleState = 'none'; // 'none', 'car', 'boat'
         let moveX = 0, moveY = 0; 
-        
         let playerSpeed = 0.18;
         let vehicleSpeed = 0;
         let vehicleRotation = 0;
         let walkCycle = 0;
 
-        // Camera Orbit Rotation (Free Fire Swipe style)
+        // Camera Swipe (Free Fire Style)
         let cameraAngleY = 0;
         let cameraAngleX = 0.5;
         let isDragging = false;
         let prevTouchX = 0, prevTouchY = 0;
 
         window.addEventListener('touchstart', (e) => {
-            // If touch is on right side of screen, enable camera drag
             if (e.touches[0].clientX > window.innerWidth / 2) {
                 isDragging = true;
                 prevTouchX = e.touches[0].clientX;
@@ -250,7 +232,7 @@
 
         window.addEventListener('touchend', () => { isDragging = false; });
 
-        // Touch Joystick (Left Side)
+        // Touch Joystick
         const base = document.getElementById('joystick-base');
         const stick = document.getElementById('joystick-stick');
         let touchingJoystick = false;
@@ -265,7 +247,6 @@
 
         function handleJoystick(e) {
             let baseRect = base.getBoundingClientRect();
-            // Find touch inside joystick base
             for (let i = 0; i < e.touches.length; i++) {
                 let touch = e.touches[i];
                 if (touch.clientX < window.innerWidth / 2) {
@@ -311,29 +292,35 @@
             }
         });
 
-        // Collision Checker function against buildings
         function checkCollision(nx, nz) {
             for (let b of buildings) {
-                if (Math.abs(nx - b.x) < b.w / 2 && Math.abs(nz - b.z) < b.d / 2) {
-                    return true; // Collision detected
-                }
+                if (Math.abs(nx - b.x) < b.w / 2 && Math.abs(nz - b.z) < b.d / 2) return true;
             }
             return false;
         }
 
-        // --- 8. GAME LOOP ---
+        // --- 6. GAME LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
+            // Animate Traffic NPC Cars
+            npcCars.forEach(car => {
+                car.mesh.position.z += car.speed;
+                if (car.mesh.position.z > car.zMax) car.mesh.position.z = car.zMin;
+            });
+
+            // Animate Pedestrians
+            npcPeople.forEach(p => {
+                p.mesh.position.x += p.speed * p.dir;
+                if (p.mesh.position.x > p.xMax || p.mesh.position.x < p.xMin) p.dir *= -1;
+            });
+
             if (vehicleState === 'none') {
-                // --- Walking with Collision & Camera Rotation ---
                 if (moveX !== 0 || moveY !== 0) {
-                    // Calculate movement relative to camera angle
                     let moveAngle = Math.atan2(moveX, moveY) + cameraAngleY;
                     let nx = playerGroup.position.x + Math.sin(moveAngle) * playerSpeed;
                     let nz = playerGroup.position.z + Math.cos(moveAngle) * playerSpeed;
 
-                    // Apply building collision check
                     if (!checkCollision(nx, nz)) {
                         playerGroup.position.x = nx;
                         playerGroup.position.z = nz;
@@ -347,14 +334,12 @@
                     leftArm.rotation.x = 0; rightArm.rotation.x = 0; leftLeg.rotation.x = 0; rightLeg.rotation.x = 0;
                 }
 
-                // Proximity Buttons
                 let distToCar = playerGroup.position.distanceTo(carGroup.position);
                 let distToBoat = playerGroup.position.distanceTo(boatGroup.position);
                 if (distToCar < 4.5) { actionBtn.innerText = "Enter Car"; actionBtn.style.display = "block"; }
                 else if (distToBoat < 6.0) { actionBtn.innerText = "Enter Boat"; actionBtn.style.display = "block"; }
                 else { actionBtn.style.display = "none"; }
 
-                // Camera follow character with Free Fire rotation
                 let camX = playerGroup.position.x + Math.sin(cameraAngleY) * 12 * Math.cos(cameraAngleX);
                 let camY = playerGroup.position.y + 3 + Math.sin(cameraAngleX) * 10;
                 let camZ = playerGroup.position.z + Math.cos(cameraAngleY) * 12 * Math.cos(cameraAngleX);
@@ -362,7 +347,6 @@
                 camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1, playerGroup.position.z);
 
             } else if (vehicleState === 'car') {
-                // --- Car Driving Controller ---
                 let targetSpeed = moveY * 0.4;
                 vehicleSpeed += (targetSpeed - vehicleSpeed) * 0.1;
 
@@ -376,13 +360,11 @@
                 if (!checkCollision(nx, nz)) {
                     carGroup.position.x = nx; carGroup.position.z = nz;
                 }
-                wheels.forEach(w => { w.rotation.x += vehicleSpeed * 2; });
 
                 camera.position.set(carGroup.position.x - Math.sin(vehicleRotation) * 14, carGroup.position.y + 5, carGroup.position.z - Math.cos(vehicleRotation) * 14);
                 camera.lookAt(carGroup.position);
 
             } else if (vehicleState === 'boat') {
-                // --- Speed Boat Controller (Water restricted) ---
                 let targetSpeed = moveY * 0.35;
                 vehicleSpeed += (targetSpeed - vehicleSpeed) * 0.08;
 
