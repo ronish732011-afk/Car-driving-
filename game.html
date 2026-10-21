@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Open World 3D - Ultimate GTA V Edition</title>
+    <title>Open World 3D - Ultimate GTA Edition</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; }
         #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -57,8 +57,8 @@
         <div id="hud-stats">
             <div>HEALTH <div class="bar-container"><div class="health-fill"></div></div></div>
             <div>ARMOR <div class="bar-container"><div class="armor-fill"></div></div></div>
-            <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$12,450,210</div>
-            <div style="margin-top: 10px; font-size: 14px;">AMMO 90/300</div>
+            <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$15,200,400</div>
+            <div style="margin-top: 10px; font-size: 14px;">AMMO 120/500</div>
         </div>
 
         <div id="joystick-base">
@@ -74,93 +74,125 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2500);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
         dirLight.position.set(100, 150, 100);
         scene.add(dirLight);
 
-        // --- 2. MASSIVE ENVIRONMENT ---
-        // Vast Sea
-        const sea = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
+        // --- 2. MASSIVE ENVIRONMENT & MOUNTAIN ---
+        const sea = new THREE.Mesh(new THREE.PlaneGeometry(3500, 3500), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
         sea.rotation.x = -Math.PI / 2; sea.position.y = -0.6; scene.add(sea);
 
-        // Massive Island Ground
-        const islandMat = new THREE.MeshLambertMaterial({ color: 0x555555 }); // Pavement/Ground gray
-        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(280, 300, 1, 32), islandMat);
+        const islandMat = new THREE.MeshLambertMaterial({ color: 0x4e6e3d }); 
+        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(320, 340, 1, 32), islandMat);
         mainIsland.position.y = -0.5; scene.add(mainIsland);
 
-        // --- HUGE MOUNTAIN ---
-        const mountain = new THREE.Mesh(
-            new THREE.ConeGeometry(90, 70, 16),
-            new THREE.MeshLambertMaterial({ color: 0x6e5c46 }) // Rocky brown
-        );
-        mountain.position.set(-140, 35, -140);
+        // Huge Mountain (Vinewood Hills)
+        const mountain = new THREE.Mesh(new THREE.ConeGeometry(100, 80, 16), new THREE.MeshLambertMaterial({ color: 0x6e5c46 }));
+        mountain.position.set(-160, 40, -160);
         scene.add(mountain);
 
-        // --- AIRPORT RUNWAY ---
+        // Airport Runway & Area
         const runwayMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-        const runway = new THREE.Mesh(new THREE.BoxGeometry(40, 0.08, 250), runwayMat);
-        runway.position.set(150, -0.46, 0);
+        const runway = new THREE.Mesh(new THREE.BoxGeometry(45, 0.08, 280), runwayMat);
+        runway.position.set(180, -0.46, 0);
         scene.add(runway);
 
-        // --- CITY ROADS & HIGHWAYS ---
+        // --- ROADS WITH WHITE STRIPES & SIGNBOARDS ---
         const roadMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a }); 
-        const road1 = new THREE.Mesh(new THREE.BoxGeometry(500, 0.06, 16), roadMat); road1.position.set(0, -0.47, 0); scene.add(road1);
-        const road2 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.06, 500), roadMat); road2.position.set(0, -0.46, 0); scene.add(road2);
+        const road1 = new THREE.Mesh(new THREE.BoxGeometry(600, 0.06, 16), roadMat); road1.position.set(0, -0.47, 0); scene.add(road1);
+        const road2 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.06, 600), roadMat); road2.position.set(0, -0.46, 0); scene.add(road2);
 
-        // Buildings & Skyscrapers with Collision List
-        const buildings = [];
+        // Road White Center Stripes
+        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        for(let i = -280; i <= 280; i += 20) {
+            const stripe = new THREE.Mesh(new THREE.BoxGeometry(2, 0.07, 6), stripeMat);
+            stripe.position.set(0, -0.45, i);
+            scene.add(stripe);
+        }
+
+        // 3D Signboards (Airport & City Guide)
+        function createSignboard(x, z, textRot, label) {
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 3), new THREE.MeshLambertMaterial({ color: 0x333333 }));
+            post.position.set(x, 1.5, z); scene.add(post);
+            const board = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.2, 0.2), new THREE.MeshLambertMaterial({ color: 0x27ae60 }));
+            board.position.set(x, 3.2, z); board.rotation.y = textRot;
+            scene.add(board);
+        }
+        createSignboard(12, -25, 0, "To City Center");
+        createSignboard(120, -50, Math.PI/2, "To Airport ->");
+
+        // Traffic Lights at Crossings
+        function createTrafficLight(x, z) {
+            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 5), new THREE.MeshLambertMaterial({ color: 0x444444 }));
+            pole.position.set(x, 2.5, z); scene.add(pole);
+            const box = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.5), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            box.position.set(x, 4.5, z); scene.add(box);
+        }
+        createTrafficLight(10, 10); createTrafficLight(-10, -10);
+
+        // Solid Buildings with Collisions
+        const solidObjects = [];
         function createBuilding(x, z, w, h, d, colorHex) {
             const bMat = new THREE.MeshLambertMaterial({ color: colorHex || 0x7f8c8d });
             const bGeo = new THREE.BoxGeometry(w, h, d);
             const building = new THREE.Mesh(bGeo, bMat);
             building.position.set(x, h/2 - 0.5, z);
             scene.add(building);
-            buildings.push({ x, z, w: w + 1, d: d + 1 });
+            solidObjects.push({ x, z, w: w + 1.2, d: d + 1.2 });
         }
 
-        // Generate Skyscrapers across the huge city
-        for (let x = -180; x <= 180; x += 35) {
-            if (Math.abs(x) < 20 || x > 100) continue; // Keep airport side clear
-            createBuilding(x, -50, 18, 40 + Math.random() * 30, 18, 0x95a5a6);
-            createBuilding(x, 50, 18, 35 + Math.random() * 35, 18, 0xbdc3c7);
+        for (let x = -200; x <= 200; x += 38) {
+            if (Math.abs(x) < 22 || x > 120) continue;
+            createBuilding(x, -55, 18, 45 + Math.random() * 30, 18, 0x95a5a6);
+            createBuilding(x, 55, 18, 40 + Math.random() * 35, 18, 0xbdc3c7);
         }
-        for (let z = -180; z <= 180; z += 35) {
-            if (Math.abs(z) < 20) continue;
-            createBuilding(-50, z, 18, 45 + Math.random() * 25, 18, 0x7f8c8d);
-            createBuilding(50, z, 18, 50 + Math.random() * 20, 18, 0x95a5a6);
+        for (let z = -200; z <= 200; z += 38) {
+            if (Math.abs(z) < 22) continue;
+            createBuilding(-55, z, 18, 50 + Math.random() * 25, 18, 0x7f8c8d);
+            createBuilding(55, z, 18, 55 + Math.random() * 20, 18, 0x95a5a6);
         }
 
-        // --- TRAFFIC CARS & NPC PEDESTRIANS ---
-        const npcCars = [];
+        // --- 3. DETAILED NPC PEOPLE (Walking with Limbs) & TRAFFIC CARS ---
         const npcPeople = [];
-
-        function spawnTrafficCar(x, z, color, speed) {
-            const car = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.9, 4.0), new THREE.MeshLambertMaterial({ color }));
-            car.position.set(x, 0.45, z);
-            scene.add(car);
-            npcCars.push({ mesh: car, zMin: -200, zMax: 200, speed });
+        function createDetailedNPC(x, z) {
+            const npcGroup = new THREE.Group();
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.35), new THREE.MeshLambertMaterial({ color: 0x9b59b6 }));
+            torso.position.y = 1.0; npcGroup.add(torso);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshLambertMaterial({ color: 0xffdbac }));
+            head.position.y = 1.6; npcGroup.add(head);
+            npcGroup.position.set(x, 0, z);
+            scene.add(npcGroup);
+            solidObjects.push({ x, z, w: 1.0, d: 1.0, isDynamic: true, mesh: npcGroup });
+            npcPeople.push({ group: npcGroup, xMin: x - 10, xMax: x + 10, speed: 0.04, dir: 1 });
         }
-        spawnTrafficCar(-5, 40, 0xe74c3c, 0.45);
-        spawnTrafficCar(5, -60, 0xf1c40f, 0.5);
-        spawnTrafficCar(-5, 100, 0x34495e, 0.4);
+        createDetailedNPC(-14, -15); createDetailedNPC(14, 25); createDetailedNPC(-18, 35);
 
-        function spawnPedestrian(x, z) {
-            const person = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.6, 0.6), new THREE.MeshLambertMaterial({ color: 0xe67e22 }));
-            person.position.set(x, 0.8, z);
-            scene.add(person);
-            npcPeople.push({ mesh: person, xMin: x - 8, xMax: x + 8, speed: 0.05, dir: 1 });
+        // Traffic Cars (Solid & Movable)
+        const trafficCars = [];
+        function spawnTrafficCar(x, z, color) {
+            const carGroup = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.85, 4.1), new THREE.MeshLambertMaterial({ color }));
+            body.position.y = 0.5; carGroup.add(body);
+            const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.55, 2.1), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+            cabin.position.set(0, 1.1, -0.2); carGroup.add(cabin);
+            carGroup.position.set(x, 0, z);
+            scene.add(carGroup);
+            solidObjects.push({ x, z, w: 2.5, d: 4.5, isDynamic: true, mesh: carGroup });
+            trafficCars.push({ group: carGroup, zMin: -220, zMax: 220, speed: 0.35 });
         }
-        spawnPedestrian(-15, -10); spawnPedestrian(15, 20); spawnPedestrian(-25, 40);
+        spawnTrafficCar(-5, 50, 0xe74c3c); // Red car
+        spawnTrafficCar(5, -70, 0xf1c40f); // Yellow car
+        spawnTrafficCar(-5, 120, 0x3498db); // Blue car
 
-        // --- 3. PLAYER & VEHICLES (Car, Boat, Airplane) ---
+        // --- 4. PLAYER, SPORTS CAR, SPEED BOAT & AIRPLANE ---
         const playerGroup = new THREE.Group();
         const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.4), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
         torso.position.y = 1.1; playerGroup.add(torso);
@@ -180,12 +212,12 @@
         playerGroup.position.set(-20, 0, -20);
         scene.add(playerGroup);
 
-        // Sports Car
+        // Sports Car (Player Driveable)
         const carGroup = new THREE.Group();
         const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 4.2), new THREE.MeshLambertMaterial({ color: 0xd35400 }));
         carBody.position.y = 0.6; carGroup.add(carBody);
-        const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 2.2), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-        cabin.position.set(0, 1.2, -0.2); carGroup.add(cabin);
+        const carCabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 2.2), new THREE.MeshLambertMaterial({ color: 0x111111 }));
+        carCabin.position.set(0, 1.2, -0.2); carGroup.add(carCabin);
         carGroup.position.set(20, 0, 15);
         scene.add(carGroup);
 
@@ -193,10 +225,10 @@
         const boatGroup = new THREE.Group();
         const boatHull = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 5.0), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
         boatHull.position.y = 0.3; boatGroup.add(boatHull);
-        boatGroup.position.set(280, -0.2, 0);
+        boatGroup.position.set(300, -0.2, 0);
         scene.add(boatGroup);
 
-        // Airplane (At Airport Runway)
+        // Airplane (At Airport)
         const planeGroup = new THREE.Group();
         const fuselage = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 12), new THREE.MeshLambertMaterial({ color: 0xecf0f1 }));
         fuselage.position.y = 1.5; planeGroup.add(fuselage);
@@ -204,11 +236,10 @@
         wings.position.set(0, 1.5, 0); planeGroup.add(wings);
         const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.5, 2), new THREE.MeshLambertMaterial({ color: 0xe74c3c }));
         tail.position.set(0, 3, -5); planeGroup.add(tail);
-
-        planeGroup.position.set(150, 0, -50);
+        planeGroup.position.set(180, 0, -60);
         scene.add(planeGroup);
 
-        // --- 4. CONTROLS & LOGIC ---
+        // --- 5. CONTROLS & PHYSICS COLLISION ---
         let vehicleState = 'none'; // 'none', 'car', 'boat', 'plane'
         let moveX = 0, moveY = 0; 
         let playerSpeed = 0.18;
@@ -217,7 +248,6 @@
         let planeAltitude = 0;
         let walkCycle = 0;
 
-        // Camera Swipe (Free Fire Style)
         let cameraAngleY = 0;
         let cameraAngleX = 0.5;
         let isDragging = false;
@@ -244,7 +274,7 @@
 
         window.addEventListener('touchend', () => { isDragging = false; });
 
-        // Touch Joystick
+        // Joystick
         const base = document.getElementById('joystick-base');
         const stick = document.getElementById('joystick-stick');
         let touchingJoystick = false;
@@ -312,27 +342,35 @@
             }
         });
 
-        function checkCollision(nx, nz) {
-            for (let b of buildings) {
-                if (Math.abs(nx - b.x) < b.w / 2 && Math.abs(nz - b.z) < b.d / 2) return true;
+        // Solid Collision Checker (Prevents walking or driving through buildings/objects)
+        function checkCollision(nx, nz, radius = 0.8) {
+            for (let obj of solidObjects) {
+                if (Math.abs(nx - obj.x) < (obj.w / 2 + radius) && Math.abs(nz - obj.z) < (obj.d / 2 + radius)) {
+                    return true;
+                }
             }
             return false;
         }
 
-        // --- 5. GAME LOOP ---
+        // --- 6. GAME LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
             // Animate Traffic Cars
-            npcCars.forEach(car => {
-                car.mesh.position.z += car.speed;
-                if (car.mesh.position.z > car.zMax) car.mesh.position.z = car.zMin;
+            trafficCars.forEach(car => {
+                car.group.position.z += car.speed;
+                if (car.group.position.z > car.zMax) car.group.position.z = car.zMin;
+                // Update dynamic collision coordinate
+                let obj = solidObjects.find(o => o.mesh === car.group);
+                if (obj) obj.z = car.group.position.z;
             });
 
-            // Animate Pedestrians
+            // Animate NPCs
             npcPeople.forEach(p => {
-                p.mesh.position.x += p.speed * p.dir;
-                if (p.mesh.position.x > p.xMax || p.mesh.position.x < p.xMin) p.dir *= -1;
+                p.group.position.x += p.speed * p.dir;
+                if (p.group.position.x > p.xMax || p.group.position.x < p.xMin) p.dir *= -1;
+                let obj = solidObjects.find(o => o.mesh === p.group);
+                if (obj) obj.x = p.group.position.x;
             });
 
             if (vehicleState === 'none') {
@@ -341,7 +379,7 @@
                     let nx = playerGroup.position.x + Math.sin(moveAngle) * playerSpeed;
                     let nz = playerGroup.position.z + Math.cos(moveAngle) * playerSpeed;
 
-                    if (!checkCollision(nx, nz)) {
+                    if (!checkCollision(nx, nz, 0.5)) {
                         playerGroup.position.x = nx;
                         playerGroup.position.z = nz;
                     }
@@ -370,7 +408,7 @@
                 camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1, playerGroup.position.z);
 
             } else if (vehicleState === 'car') {
-                let targetSpeed = moveY * 0.4;
+                let targetSpeed = moveY * 0.45;
                 vehicleSpeed += (targetSpeed - vehicleSpeed) * 0.1;
 
                 if (moveX !== 0 && Math.abs(vehicleSpeed) > 0.01) {
@@ -380,7 +418,7 @@
 
                 let nx = carGroup.position.x + Math.sin(vehicleRotation) * vehicleSpeed;
                 let nz = carGroup.position.z + Math.cos(vehicleRotation) * vehicleSpeed;
-                if (!checkCollision(nx, nz)) {
+                if (!checkCollision(nx, nz, 1.2)) {
                     carGroup.position.x = nx; carGroup.position.z = nz;
                 }
 
@@ -403,8 +441,7 @@
                 camera.lookAt(boatGroup.position);
 
             } else if (vehicleState === 'plane') {
-                // --- Airplane Flight Controls ---
-                let targetSpeed = moveY * 0.6; // High speed for flight
+                let targetSpeed = moveY * 0.65;
                 vehicleSpeed += (targetSpeed - vehicleSpeed) * 0.05;
 
                 if (moveX !== 0) {
@@ -412,21 +449,19 @@
                     planeGroup.rotation.y = vehicleRotation;
                 }
 
-                // If moving forward, gain altitude based on joystick pull-back
                 if (vehicleSpeed > 0.1) {
-                    planeAltitude += (moveY * 0.2);
-                    planeAltitude = Math.max(1, Math.min(150, planeAltitude)); // Flight altitude limits
+                    planeAltitude += (moveY * 0.25);
+                    planeAltitude = Math.max(1, Math.min(180, planeAltitude));
                 }
 
                 planeGroup.position.y = planeAltitude;
                 planeGroup.position.x += Math.sin(vehicleRotation) * vehicleSpeed;
                 planeGroup.position.z += Math.cos(vehicleRotation) * vehicleSpeed;
 
-                // Follow camera behind plane
                 camera.position.set(
-                    planeGroup.position.x - Math.sin(vehicleRotation) * 22, 
+                    planeGroup.position.x - Math.sin(vehicleRotation) * 24, 
                     planeGroup.position.y + 8, 
-                    planeGroup.position.z - Math.cos(vehicleRotation) * 22
+                    planeGroup.position.z - Math.cos(vehicleRotation) * 24
                 );
                 camera.lookAt(planeGroup.position);
             }
