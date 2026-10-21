@@ -55,69 +55,170 @@
         document.body.appendChild(renderer.domElement);
 
         // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
         dirLight.position.set(20, 40, 20);
         scene.add(dirLight);
 
-        // --- 2. ENVIRONMENT (Island & Water) ---
+        // --- 2. ENVIRONMENT (Natural Island & Water) ---
         // Sea
-        const seaGeo = new THREE.PlaneGeometry(500, 500);
+        const seaGeo = new THREE.PlaneGeometry(600, 600);
         const seaMat = new THREE.MeshBasicMaterial({ color: 0x1e90ff });
         const sea = new THREE.Mesh(seaGeo, seaMat);
         sea.rotation.x = -Math.PI / 2;
-        sea.position.y = -0.5;
+        sea.position.y = -0.6;
         scene.add(sea);
 
-        // Island
-        const islandGeo = new THREE.CylinderGeometry(60, 60, 1, 32);
-        const islandMat = new THREE.MeshBasicMaterial({ color: 0x557a2b }); // Grass green
-        const island = new THREE.Mesh(islandGeo, islandMat);
-        island.position.y = -0.5;
-        scene.add(island);
+        // Organic / Irregular Island shape using Extrude/Custom Geometry simulation or multi-cylinder blend
+        const islandGroup = new THREE.Group();
+        const mainIslandGeo = new THREE.CylinderGeometry(55, 65, 1, 16);
+        const islandMat = new THREE.MeshLambertMaterial({ color: 0x557a2b }); // Grass green
+        const mainIsland = new THREE.Mesh(mainIslandGeo, islandMat);
+        mainIsland.position.y = -0.5;
+        islandGroup.add(mainIsland);
+
+        // Adding side extensions to make it look non-circular / natural world map
+        const ext1Geo = new THREE.CylinderGeometry(30, 35, 1, 12);
+        const ext1 = new THREE.Mesh(ext1Geo, islandMat);
+        ext1.position.set(40, -0.5, 20);
+        islandGroup.add(ext1);
+
+        const ext2Geo = new THREE.CylinderGeometry(25, 30, 1, 12);
+        const ext2 = new THREE.Mesh(ext2Geo, islandMat);
+        ext2.position.set(-45, -0.5, -25);
+        islandGroup.add(ext2);
+        scene.add(islandGroup);
 
         // House
         const houseGeo = new THREE.BoxGeometry(6, 4, 6);
         const houseMat = new THREE.MeshLambertMaterial({ color: 0xd9d9d9 });
         const house = new THREE.Mesh(houseGeo, houseMat);
-        house.position.set(0, 2, -10);
+        house.position.set(0, 2, -12);
         scene.add(house);
 
         // House Roof
         const roofGeo = new THREE.ConeGeometry(5, 3, 4);
         const roofMat = new THREE.MeshLambertMaterial({ color: 0xb22222 });
         const roof = new THREE.Mesh(roofGeo, roofMat);
-        roof.position.set(0, 5.5, -10);
+        roof.position.set(0, 5.5, -12);
         roof.rotation.y = Math.PI / 4;
         scene.add(roof);
 
-        // --- 3. PLAYER & SPORTS CAR ---
-        // Player (Minecraft-style blocky character)
-        const playerGeo = new THREE.BoxGeometry(1, 2, 1);
-        const playerMat = new THREE.MeshLambertMaterial({ color: 0x0055ff });
-        const player = new THREE.Mesh(playerGeo, playerMat);
-        player.position.set(0, 1, 0); // Spawn in front of the house
-        scene.add(player);
+        // --- 3. DETAILED BLOCKY CHARACTER (Minecraft Style with limbs & clothes) ---
+        const playerGroup = new THREE.Group();
 
-        // Sports Car (Placed on the right side of the house)
-        const carGroup = new THREE.Group();
-        const carBodyGeo = new THREE.BoxGeometry(2, 1, 4);
-        const carBodyMat = new THREE.MeshLambertMaterial({ color: 0xff0000 }); // Bright Red Sports Car
-        const carBody = new THREE.Mesh(carBodyGeo, carBodyMat);
-        carBody.position.y = 0.5;
-        carGroup.add(carBody);
+        // Torso / Outfit (Streetwear Hoodie)
+        const torsoGeo = new THREE.BoxGeometry(0.8, 1.0, 0.4);
+        const torsoMat = new THREE.MeshLambertMaterial({ color: 0x222222 }); // Dark streetwear hoodie
+        const torso = new THREE.Mesh(torsoGeo, torsoMat);
+        torso.position.y = 1.1;
+        playerGroup.add(torso);
+
+        // Head & Face
+        const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+        const headMat = new THREE.MeshLambertMaterial({ color: 0xffdbac }); // Skin tone
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.y = 1.8;
+        playerGroup.add(head);
+
+        // Arms
+        const armGeo = new THREE.BoxGeometry(0.25, 0.9, 0.3);
+        const armMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
         
-        carGroup.position.set(8, 0, -8);
+        const leftArm = new THREE.Mesh(armGeo, armMat);
+        leftArm.position.set(-0.55, 1.1, 0);
+        playerGroup.add(leftArm);
+
+        const rightArm = new THREE.Mesh(armGeo, armMat);
+        rightArm.position.set(0.55, 1.1, 0);
+        playerGroup.add(rightArm);
+
+        // Legs
+        const legGeo = new THREE.BoxGeometry(0.3, 0.9, 0.3);
+        const legMat = new THREE.MeshLambertMaterial({ color: 0x111155 }); // Dark pants
+        
+        const leftLeg = new THREE.Mesh(legGeo, legMat);
+        leftLeg.position.set(-0.2, 0.45, 0);
+        playerGroup.add(leftLeg);
+
+        const rightLeg = new THREE.Mesh(legGeo, legMat);
+        rightLeg.position.set(0.2, 0.45, 0);
+        playerGroup.add(rightLeg);
+
+        playerGroup.position.set(0, 0, 0); // Spawn in front of house
+        scene.add(playerGroup);
+
+        // --- 4. DETAILED SPORTS CAR (With Wheels, Headlights, Backlights) ---
+        const carGroup = new THREE.Group();
+        
+        // Car Body
+        const carBodyGeo = new THREE.BoxGeometry(2.2, 0.8, 4.2);
+        const carBodyMat = new THREE.MeshLambertMaterial({ color: 0xff0055 }); // Stylish Neon Pinkish-Red Sports Car
+        const carBody = new THREE.Mesh(carBodyGeo, carBodyMat);
+        carBody.position.y = 0.6;
+        carGroup.add(carBody);
+
+        // Car Cabin / Roof
+        const cabinGeo = new THREE.BoxGeometry(1.8, 0.6, 2.2);
+        const cabinMat = new THREE.MeshLambertMaterial({ color: 0x222222 }); // Tinted Glass look
+        const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+        cabin.position.set(0, 1.2, -0.2);
+        carGroup.add(cabin);
+
+        // Wheels (4 Wheels)
+        const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.3, 16);
+        const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+        
+        const wheelPositions = [
+            [-1.1, 0.35, 1.4],   // Front Left
+            [1.1, 0.35, 1.4],    // Front Right
+            [-1.1, 0.35, -1.4],  // Back Left
+            [1.1, 0.35, -1.4]    // Back Right
+        ];
+
+        const wheels = [];
+        wheelPositions.forEach(pos => {
+            const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            wheel.rotation.z = Math.PI / 2;
+            wheel.position.set(...pos);
+            carGroup.add(wheel);
+            wheels.push(wheel);
+        });
+
+        // Headlights (Front)
+        const lightGeo = new THREE.BoxGeometry(0.4, 0.2, 0.1);
+        const headLightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 }); // Yellow glowing effect
+        
+        const leftHeadLight = new THREE.Mesh(lightGeo, headLightMat);
+        leftHeadLight.position.set(-0.8, 0.6, 2.15);
+        carGroup.add(leftHeadLight);
+
+        const rightHeadLight = new THREE.Mesh(lightGeo, headLightMat);
+        rightHeadLight.position.set(0.8, 0.6, 2.15);
+        carGroup.add(rightHeadLight);
+
+        // Backlights (Rear)
+        const backLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red glowing rear lights
+        const leftBackLight = new THREE.Mesh(lightGeo, backLightMat);
+        leftBackLight.position.set(-0.8, 0.6, -2.15);
+        carGroup.add(leftBackLight);
+
+        const rightBackLight = new THREE.Mesh(lightGeo, backLightMat);
+        rightBackLight.position.set(0.8, 0.6, -2.15);
+        carGroup.add(rightBackLight);
+
+        carGroup.position.set(8, 0, -8); // Parked on the right side of the house
         scene.add(carGroup);
 
-        // --- 4. GAME VARIABLES & CONTROLS ---
+        // --- 5. GAME CONTROLS & LOGIC ---
         let isInCar = false;
         let moveX = 0, moveY = 0; // Joystick vector values (-1 to 1)
         
         let playerSpeed = 0.15;
         let carSpeed = 0;
         let carRotation = 0;
+        let walkCycle = 0;
 
         // Touch Joystick Logic
         const base = document.getElementById('joystick-base');
@@ -151,7 +252,7 @@
 
             stick.style.transform = `translate(${dx}px, ${dy}px)`;
             moveX = dx / maxDist;
-            moveY = -dy / maxDist; // Invert Y for forward movement
+            moveY = -dy / maxDist; // Forward/Backward throttle
         }
 
         // Action Button (Enter / Exit Car)
@@ -160,70 +261,86 @@
             isInCar = !isInCar;
             if (isInCar) {
                 actionBtn.innerText = "Exit Car";
-                player.visible = false; // Hide player inside car
+                playerGroup.visible = false; // Hide character inside car
             } else {
                 actionBtn.innerText = "Enter Car";
-                player.visible = true;
-                // Position player right outside the car door
-                player.position.set(carGroup.position.x - 2, 1, carGroup.position.z);
+                playerGroup.visible = true;
+                // Position character right outside the driver door
+                playerGroup.position.set(carGroup.position.x - 2.5, 0, carGroup.position.z);
             }
         });
 
-        // --- 5. GAME LOOP ---
+        // --- 6. GAME LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
             if (!isInCar) {
-                // --- Walking Controls ---
+                // --- Character Walking Controls ---
                 if (moveX !== 0 || moveY !== 0) {
-                    player.position.x += moveX * playerSpeed;
-                    player.position.z -= moveY * playerSpeed;
+                    playerGroup.position.x += moveX * playerSpeed;
+                    playerGroup.position.z -= moveY * playerSpeed;
                     
                     // Face movement direction
-                    player.rotation.y = Math.atan2(moveX, moveY);
+                    playerGroup.rotation.y = Math.atan2(moveX, moveY);
+
+                    // Simple walking animation (swinging arms & legs)
+                    walkCycle += 0.2;
+                    leftArm.rotation.x = Math.sin(walkCycle) * 0.5;
+                    rightArm.rotation.x = -Math.sin(walkCycle) * 0.5;
+                    leftLeg.rotation.x = -Math.sin(walkCycle) * 0.5;
+                    rightLeg.rotation.x = Math.sin(walkCycle) * 0.5;
+                } else {
+                    // Reset limbs when standing still
+                    leftArm.rotation.x = 0; rightArm.rotation.x = 0;
+                    leftLeg.rotation.x = 0; rightLeg.rotation.x = 0;
                 }
 
-                // Check distance to car for entering
-                let distToCar = player.position.distanceTo(carGroup.position);
-                if (distToCar < 4.0) {
+                // Check distance to car for entering prompt
+                let distToCar = playerGroup.position.distanceTo(carGroup.position);
+                if (distToCar < 4.5) {
                     actionBtn.style.display = "block";
                 } else {
                     actionBtn.style.display = "none";
                 }
 
-                // Camera follow player
-                camera.position.set(player.position.x, player.position.y + 6, player.position.z + 10);
-                camera.lookAt(player.position);
+                // Smooth Camera follow character
+                camera.position.set(playerGroup.position.x, playerGroup.position.y + 6, playerGroup.position.z + 10);
+                camera.lookAt(playerGroup.position);
 
             } else {
-                // --- Driving Controls ---
-                carSpeed = moveY * 0.3; // Throttle
-                if (moveX !== 0 && carSpeed !== 0) {
-                    carRotation -= moveX * 0.04 * Math.sign(carSpeed);
+                // --- Car Pro Driving Controller (Acceleration & Steering) ---
+                let targetSpeed = moveY * 0.35; // Forward / Reverse Throttle
+                carSpeed += (targetSpeed - carSpeed) * 0.1; // Smooth acceleration response
+
+                if (moveX !== 0 && Math.abs(carSpeed) > 0.01) {
+                    carRotation -= moveX * 0.05 * Math.sign(carSpeed);
                     carGroup.rotation.y = carRotation;
                 }
 
-                // Move car forward based on its rotation angle
+                // Move car forward based on its steering rotation angle
                 carGroup.position.x += Math.sin(carRotation) * carSpeed;
                 carGroup.position.z += Math.cos(carRotation) * carSpeed;
 
-                // Camera follow car
-                let camOffsetX = -Math.sin(carRotation) * 10;
-                let camOffsetZ = -Math.cos(carRotation) * 10;
+                // Rotate wheels when driving
+                wheels.forEach(wheel => { wheel.rotation.x += carSpeed * 2; });
+
+                // Smooth Camera follow car from behind
+                let camOffsetX = -Math.sin(carRotation) * 12;
+                let camOffsetZ = -Math.cos(carRotation) * 12;
                 camera.position.set(carGroup.position.x + camOffsetX, carGroup.position.y + 5, carGroup.position.z + camOffsetZ);
                 camera.lookAt(carGroup.position);
             }
 
-            // Keep entities inside island boundaries
-            if (player.position.length() > 55) player.position.clampLength(0, 55);
-            if (carGroup.position.length() > 55) carGroup.position.clampLength(0, 55);
+            // Island Boundary limits
+            if (playerGroup.position.length() > 60) playerGroup.position.clampLength(0, 60);
+            if (carGroup.position.length() > 60) carGroup.position.clampLength(0, 60);
 
             renderer.render(scene, camera);
         }
 
         animate();
 
-        // Handle window resizing
+        // Handle window resizing dynamically
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
