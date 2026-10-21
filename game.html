@@ -17,7 +17,6 @@
             border-radius: 8px;
             overflow: hidden;
         }
-        /* Mini map radar lines */
         #minimap::before {
             content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.2);
         }
@@ -99,11 +98,11 @@
         dirLight.position.set(100, 150, 100);
         scene.add(dirLight);
 
-        // --- 2. ENVIRONMENT & LSIA AIRPORT RUNWAY ---
+        // --- 2. ENVIRONMENT & ISLAND ---
         const sea = new THREE.Mesh(new THREE.PlaneGeometry(4500, 4500), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
         sea.rotation.x = -Math.PI / 2; sea.position.y = -0.6; scene.add(sea);
 
-        const islandMat = new THREE.MeshLambertMaterial({ color: 0x4e6e3d }); 
+        const islandMat = new THREE.MeshLambertMaterial({ color: 0x4e6e3d }); // Natural Grass Green
         const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(380, 400, 1, 32), islandMat);
         mainIsland.position.y = -0.5; scene.add(mainIsland);
 
@@ -112,7 +111,7 @@
         mountain.position.set(-200, 45, -200);
         scene.add(mountain);
 
-        // --- LSIA AIRPORT RUNWAY & MARKINGS ---
+        // --- LSIA AIRPORT ONLY (Runway & Tarmac) ---
         const airportGroup = new THREE.Group();
         const tarmac = new THREE.Mesh(new THREE.BoxGeometry(180, 0.05, 420), new THREE.MeshLambertMaterial({ color: 0x222222 }));
         tarmac.position.set(240, -0.45, 0);
@@ -130,7 +129,7 @@
             airportGroup.add(stripe);
         }
 
-        // Control Tower (GTA Style)
+        // Control Tower
         const towerMat = new THREE.MeshLambertMaterial({ color: 0x95a5a6 });
         const tower = new THREE.Mesh(new THREE.BoxGeometry(9, 42, 9), towerMat);
         tower.position.set(310, 21, -120);
@@ -141,23 +140,23 @@
         scene.add(airportGroup);
 
         // --- WIDE HIGHWAY ROADS ---
-        const roadMat = new THREE.MeshBasicMaterial({ color: 0x111111 }); 
-        const highwayH = new THREE.Mesh(new THREE.BoxGeometry(750, 0.1, 30), roadMat); 
-        highwayH.position.set(0, -0.38, 0); 
+        const roadMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a }); 
+        const highwayH = new THREE.Mesh(new THREE.BoxGeometry(750, 0.08, 30), roadMat); 
+        highwayH.position.set(0, -0.42, 0); 
         scene.add(highwayH);
 
-        const highwayV = new THREE.Mesh(new THREE.BoxGeometry(30, 0.1, 750), roadMat); 
-        highwayV.position.set(0, -0.37, 0); 
+        const highwayV = new THREE.Mesh(new THREE.BoxGeometry(30, 0.08, 750), roadMat); 
+        highwayV.position.set(0, -0.41, 0); 
         scene.add(highwayV);
 
         const yellowStripeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
         for(let i = -350; i <= 350; i += 25) {
-            const stripeH = new THREE.Mesh(new THREE.BoxGeometry(10, 0.12, 1.2), yellowStripeMat);
-            stripeH.position.set(i, -0.35, 0);
+            const stripeH = new THREE.Mesh(new THREE.BoxGeometry(10, 0.1, 1.2), yellowStripeMat);
+            stripeH.position.set(i, -0.39, 0);
             scene.add(stripeH);
 
-            const stripeV = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.12, 10), yellowStripeMat);
-            stripeV.position.set(0, -0.35, i);
+            const stripeV = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 10), yellowStripeMat);
+            stripeV.position.set(0, -0.39, i);
             scene.add(stripeV);
         }
 
@@ -201,22 +200,30 @@
             createDetailedBuilding(75, z, 22, 52 + Math.random() * 28, 22, 0x95a5a6);
         }
 
-        // --- WANDERING NPC PEOPLE & TRAFFIC ---
+        // --- RANDOM INDEPENDENT NPC PEOPLE ---
         const npcPeople = [];
-        function createWanderingNPC(x, z) {
+        function createRandomNPC(x, z) {
             const npcGroup = new THREE.Group();
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.35), new THREE.MeshLambertMaterial({ color: 0xe67e22 }));
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.35), new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
             torso.position.y = 1.0; npcGroup.add(torso);
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshLambertMaterial({ color: 0xffdbac }));
             head.position.y = 1.6; npcGroup.add(head);
             npcGroup.position.set(x, 0, z);
             scene.add(npcGroup);
             solidObjects.push({ x, z, w: 1.0, d: 1.0, isDynamic: true, mesh: npcGroup });
-            npcPeople.push({ group: npcGroup, xMin: x - 15, xMax: x + 15, speed: 0.04, dir: 1 });
+            
+            // Random movement parameters for each NPC
+            npcPeople.push({ 
+                group: npcGroup, 
+                xMin: x - 20, xMax: x + 20, 
+                zMin: z - 20, zMax: z + 20,
+                speedX: (Math.random() - 0.5) * 0.08, 
+                speedZ: (Math.random() - 0.5) * 0.08 
+            });
         }
-        for(let i = -140; i <= 140; i += 35) {
-            createWanderingNPC(20, i);
-            createWanderingNPC(-20, i + 18);
+        for(let i = -140; i <= 140; i += 30) {
+            createRandomNPC(20 + (Math.random()*10), i);
+            createRandomNPC(-20 - (Math.random()*10), i + 15);
         }
 
         const trafficCars = [];
@@ -271,7 +278,7 @@
         boatGroup.position.set(380, -0.2, 0);
         scene.add(boatGroup);
 
-        // Airplane (Parked on LSIA Tarmac Runway)
+        // Airplane (Parked on LSIA Runway)
         const planeGroup = new THREE.Group();
         const fuselage = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 14), new THREE.MeshLambertMaterial({ color: 0xecf0f1 }));
         fuselage.position.y = 1.5; planeGroup.add(fuselage);
@@ -282,7 +289,7 @@
         planeGroup.position.set(240, 0, -60);
         scene.add(planeGroup);
 
-        // --- 4. CONTROLS & UNIQUE VEHICLE LOGIC ---
+        // --- 4. CONTROLS & LOGIC ---
         let vehicleState = 'none'; 
         let moveX = 0, moveY = 0; 
         let playerSpeed = 0.18;
@@ -409,11 +416,15 @@
                 if (obj) obj.z = car.group.position.z;
             });
 
+            // Random independent NPC movement
             npcPeople.forEach(p => {
-                p.group.position.x += p.speed * p.dir;
-                if (p.group.position.x > p.xMax || p.group.position.x < p.xMin) p.dir *= -1;
+                p.group.position.x += p.speedX;
+                p.group.position.z += p.speedZ;
+                if (p.group.position.x > p.xMax || p.group.position.x < p.xMin) p.speedX *= -1;
+                if (p.group.position.z > p.zMax || p.group.position.z < p.zMin) p.speedZ *= -1;
+
                 let obj = solidObjects.find(o => o.mesh === p.group);
-                if (obj) obj.x = p.group.position.x;
+                if (obj) { obj.x = p.group.position.x; obj.z = p.group.position.z; }
             });
 
             if (vehicleState === 'none') {
@@ -435,7 +446,6 @@
                     leftArm.rotation.x = 0; rightArm.rotation.x = 0; leftLeg.rotation.x = 0; rightLeg.rotation.x = 0;
                 }
 
-                // Update Mini-map blip position based on player coordinates
                 const blip = document.getElementById('map-blip');
                 blip.style.transform = `translate(${playerGroup.position.x * 0.2}px, ${playerGroup.position.z * 0.2}px)`;
 
