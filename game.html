@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Open World 3D - GTA V LSIA Edition</title>
+    <title>Open World 3D - Burj Khalifa & City Edition</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; }
+        body { margin: 0; overflow: hidden; background: #87ceeb; font-family: sans-serif; touch-action: none; }
         #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
         /* GTA Style Mini-Map & HUD */
         #minimap {
             position: absolute; top: 15px; left: 15px;
-            width: 150px; height: 110px;
+            width: 140px; height: 100px;
             background: rgba(20, 35, 50, 0.85);
             border: 2px solid rgba(255, 255, 255, 0.5);
             border-radius: 8px;
@@ -24,7 +24,7 @@
             content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 100%; background: rgba(255,255,255,0.2);
         }
         #map-blip {
-            position: absolute; top: 55px; left: 72px; width: 8px; height: 8px; background: #3498db; border: 1px solid #fff; border-radius: 50%;
+            position: absolute; top: 48px; left: 66px; width: 8px; height: 8px; background: #3498db; border: 1px solid #fff; border-radius: 50%;
         }
 
         #hud-stats {
@@ -69,7 +69,7 @@
             <div>HEALTH <div class="bar-container"><div class="health-fill"></div></div></div>
             <div>ARMOR <div class="bar-container"><div class="armor-fill"></div></div></div>
             <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$8,450,210</div>
-            <div style="margin-top: 6px; font-size: 13px; color: #bdc3c7;">LSIA Tarmac</div>
+            <div style="margin-top: 6px; font-size: 13px; color: #bdc3c7;">Downtown City</div>
             <div style="margin-top: 8px; font-size: 14px;">AMMO 45/180</div>
         </div>
 
@@ -86,7 +86,7 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3500);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1500);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
@@ -99,148 +99,85 @@
         scene.add(dirLight);
 
         // --- 2. ENVIRONMENT & ISLAND ---
-        const sea = new THREE.Mesh(new THREE.PlaneGeometry(4500, 4500), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
+        const sea = new THREE.Mesh(new THREE.PlaneGeometry(2500, 2500), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
         sea.rotation.x = -Math.PI / 2; sea.position.y = -0.6; scene.add(sea);
 
-        const islandMat = new THREE.MeshLambertMaterial({ color: 0x4e6e3d }); // Natural Grass Green
-        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(380, 400, 1, 32), islandMat);
+        const islandMat = new THREE.MeshLambertMaterial({ color: 0x4e6e3d }); 
+        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(250, 270, 1, 32), islandMat);
         mainIsland.position.y = -0.5; scene.add(mainIsland);
 
-        // Huge Mountain
-        const mountain = new THREE.Mesh(new THREE.ConeGeometry(120, 90, 16), new THREE.MeshLambertMaterial({ color: 0x6e5c46 }));
-        mountain.position.set(-200, 45, -200);
-        scene.add(mountain);
+        // --- BURJ KHALIFA (Massive Skyscraper in City Center) ---
+        const burjGroup = new THREE.Group();
+        const bBase = new THREE.Mesh(new THREE.BoxGeometry(12, 120, 12), new THREE.MeshLambertMaterial({ color: 0xbdc3c7 }));
+        bBase.position.y = 60; burjGroup.add(bBase);
+        const bMid = new THREE.Mesh(new THREE.BoxGeometry(8, 60, 8), new THREE.MeshLambertMaterial({ color: 0x95a5a6 }));
+        bMid.position.y = 150; burjGroup.add(bMid);
+        const bTop = new THREE.Mesh(new THREE.BoxGeometry(4, 50, 4), new THREE.MeshLambertMaterial({ color: 0xecf0f1 }));
+        bTop.position.y = 200; burjGroup.add(bTop);
+        burjGroup.position.set(0, 0, 0);
+        scene.add(burjGroup);
 
-        // --- LSIA AIRPORT ONLY (Runway & Tarmac) ---
+        // --- LSIA AIRPORT ONLY (Runway at right side) ---
         const airportGroup = new THREE.Group();
-        const tarmac = new THREE.Mesh(new THREE.BoxGeometry(180, 0.05, 420), new THREE.MeshLambertMaterial({ color: 0x222222 }));
-        tarmac.position.set(240, -0.45, 0);
+        const tarmac = new THREE.Mesh(new THREE.BoxGeometry(120, 0.05, 300), new THREE.MeshLambertMaterial({ color: 0x222222 }));
+        tarmac.position.set(180, -0.45, 0);
         airportGroup.add(tarmac);
 
-        const runway = new THREE.Mesh(new THREE.BoxGeometry(45, 0.09, 380), new THREE.MeshBasicMaterial({ color: 0x111111 }));
-        runway.position.set(240, -0.43, 0);
+        const runway = new THREE.Mesh(new THREE.BoxGeometry(30, 0.09, 260), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+        runway.position.set(180, -0.43, 0);
         airportGroup.add(runway);
-
-        // Runway White Threshold Stripes
-        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        for(let zOffset = -170; z <= 170; z += 30) {
-            const stripe = new THREE.Mesh(new THREE.BoxGeometry(3, 0.1, 10), stripeMat);
-            stripe.position.set(240, -0.40, zOffset);
-            airportGroup.add(stripe);
-        }
-
-        // Control Tower
-        const towerMat = new THREE.MeshLambertMaterial({ color: 0x95a5a6 });
-        const tower = new THREE.Mesh(new THREE.BoxGeometry(9, 42, 9), towerMat);
-        tower.position.set(310, 21, -120);
-        airportGroup.add(tower);
-        const towerTop = new THREE.Mesh(new THREE.BoxGeometry(14, 7, 14), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
-        towerTop.position.set(310, 44, -120);
-        airportGroup.add(towerTop);
         scene.add(airportGroup);
 
         // --- WIDE HIGHWAY ROADS ---
         const roadMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a }); 
-        const highwayH = new THREE.Mesh(new THREE.BoxGeometry(750, 0.08, 30), roadMat); 
+        const highwayH = new THREE.Mesh(new THREE.BoxGeometry(500, 0.08, 22), roadMat); 
         highwayH.position.set(0, -0.42, 0); 
         scene.add(highwayH);
 
-        const highwayV = new THREE.Mesh(new THREE.BoxGeometry(30, 0.08, 750), roadMat); 
+        const highwayV = new THREE.Mesh(new THREE.BoxGeometry(22, 0.08, 500), roadMat); 
         highwayV.position.set(0, -0.41, 0); 
         scene.add(highwayV);
 
-        const yellowStripeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        for(let i = -350; i <= 350; i += 25) {
-            const stripeH = new THREE.Mesh(new THREE.BoxGeometry(10, 0.1, 1.2), yellowStripeMat);
-            stripeH.position.set(i, -0.39, 0);
-            scene.add(stripeH);
-
-            const stripeV = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.1, 10), yellowStripeMat);
-            stripeV.position.set(0, -0.39, i);
-            scene.add(stripeV);
-        }
-
-        // --- DETAILED BUILDINGS (Windows & Doors) ---
+        // --- BUILDINGS ---
         const solidObjects = [];
-        function createDetailedBuilding(x, z, w, h, d, colorHex) {
-            const bGroup = new THREE.Group();
-            const bMat = new THREE.MeshLambertMaterial({ color: colorHex || 0x7f8c8d });
-            const mainBody = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bMat);
-            mainBody.position.y = h / 2 - 0.5;
-            bGroup.add(mainBody);
-
-            const winMat = new THREE.MeshBasicMaterial({ color: 0xf1c40f }); 
-            const doorMat = new THREE.MeshLambertMaterial({ color: 0x4e342e }); 
-            
-            const door = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.5, 0.2), doorMat);
-            door.position.set(0, 1.2, d/2 + 0.1);
-            bGroup.add(door);
-
-            for(let wy = 3; wy < h - 2; wy += 4) {
-                for(let wx = -w/3; wx <= w/3; wx += 3) {
-                    const win = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.2), winMat);
-                    win.position.set(wx, wy, d/2 + 0.1);
-                    bGroup.add(win);
-                }
-            }
-
-            bGroup.position.set(x, 0, z);
-            scene.add(bGroup);
-            solidObjects.push({ x, z, w: w + 1.2, d: d + 1.2 });
+        function createBuilding(x, z, w, h, d) {
+            const bMat = new THREE.MeshLambertMaterial({ color: 0x7f8c8d });
+            const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bMat);
+            building.position.set(x, h / 2 - 0.5, z);
+            scene.add(building);
+            solidObjects.push({ x, z, w: w + 1, d: d + 1 });
         }
 
-        for (let x = -260; x <= 140; x += 48) {
-            if (Math.abs(x) < 35) continue;
-            createDetailedBuilding(x, -75, 22, 55 + Math.random() * 25, 22, 0x95a5a6);
-            createDetailedBuilding(x, 75, 22, 50 + Math.random() * 30, 22, 0xbdc3c7);
-        }
-        for (let z = -260; z <= 260; z += 48) {
-            if (Math.abs(z) < 35) continue;
-            createDetailedBuilding(-75, z, 22, 60 + Math.random() * 20, 22, 0x7f8c8d);
-            createDetailedBuilding(75, z, 22, 52 + Math.random() * 28, 22, 0x95a5a6);
+        for (let x = -180; x <= 120; x += 35) {
+            if (Math.abs(x) < 25) continue;
+            createBuilding(x, -50, 16, 35 + Math.random() * 20, 16);
+            createBuilding(x, 50, 16, 30 + Math.random() * 25, 16);
         }
 
-        // --- RANDOM INDEPENDENT NPC PEOPLE ---
+        // --- RANDOM NPC PEOPLE ---
         const npcPeople = [];
         function createRandomNPC(x, z) {
             const npcGroup = new THREE.Group();
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.35), new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
-            torso.position.y = 1.0; npcGroup.add(torso);
-            const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshLambertMaterial({ color: 0xffdbac }));
-            head.position.y = 1.6; npcGroup.add(head);
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.3), new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
+            torso.position.y = 0.9; npcGroup.add(torso);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshLambertMaterial({ color: 0xffdbac }));
+            head.position.y = 1.4; npcGroup.add(head);
             npcGroup.position.set(x, 0, z);
             scene.add(npcGroup);
-            solidObjects.push({ x, z, w: 1.0, d: 1.0, isDynamic: true, mesh: npcGroup });
+            solidObjects.push({ x, z, w: 0.8, d: 0.8, isDynamic: true, mesh: npcGroup });
             
-            // Random movement parameters for each NPC
             npcPeople.push({ 
                 group: npcGroup, 
-                xMin: x - 20, xMax: x + 20, 
-                zMin: z - 20, zMax: z + 20,
-                speedX: (Math.random() - 0.5) * 0.08, 
-                speedZ: (Math.random() - 0.5) * 0.08 
+                xMin: x - 15, xMax: x + 15, 
+                zMin: z - 15, zMax: z + 15,
+                speedX: (Math.random() - 0.5) * 0.06, 
+                speedZ: (Math.random() - 0.5) * 0.06 
             });
         }
-        for(let i = -140; i <= 140; i += 30) {
-            createRandomNPC(20 + (Math.random()*10), i);
-            createRandomNPC(-20 - (Math.random()*10), i + 15);
+        for(let i = -100; i <= 100; i += 25) {
+            createRandomNPC(15, i);
+            createRandomNPC(-15, i + 10);
         }
-
-        const trafficCars = [];
-        function spawnTrafficCar(x, z, color) {
-            const carGroup = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.85, 4.1), new THREE.MeshLambertMaterial({ color }));
-            body.position.y = 0.5; carGroup.add(body);
-            const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.55, 2.1), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-            cabin.position.set(0, 1.1, -0.2); carGroup.add(cabin);
-            carGroup.position.set(x, 0, z);
-            scene.add(carGroup);
-            solidObjects.push({ x, z, w: 2.5, d: 4.5, isDynamic: true, mesh: carGroup });
-            trafficCars.push({ group: carGroup, zMin: -300, zMax: 300, speed: 0.45 });
-        }
-        spawnTrafficCar(-7, 80, 0xe74c3c);
-        spawnTrafficCar(7, -110, 0xf1c40f);
-        spawnTrafficCar(-7, 180, 0x3498db);
 
         // --- PLAYER, SPORTS CAR, SPEED BOAT & AIRPLANE ---
         const playerGroup = new THREE.Group();
@@ -259,34 +196,30 @@
         const leftLeg = new THREE.Mesh(legGeo, legMat); leftLeg.position.set(-0.2, 0.45, 0); playerGroup.add(leftLeg);
         const rightLeg = new THREE.Mesh(legGeo, legMat); rightLeg.position.set(0.2, 0.45, 0); playerGroup.add(rightLeg);
 
-        playerGroup.position.set(-25, 0, -25);
+        playerGroup.position.set(-20, 0, -20);
         scene.add(playerGroup);
 
         // Sports Car
         const carGroup = new THREE.Group();
         const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 4.2), new THREE.MeshLambertMaterial({ color: 0xd35400 }));
         carBody.position.y = 0.6; carGroup.add(carBody);
-        const carCabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 2.2), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-        carCabin.position.set(0, 1.2, -0.2); carGroup.add(carCabin);
-        carGroup.position.set(25, 0, 20);
+        carGroup.position.set(20, 0, 15);
         scene.add(carGroup);
 
         // Speed Boat
         const boatGroup = new THREE.Group();
         const boatHull = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 5.0), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
         boatHull.position.y = 0.3; boatGroup.add(boatHull);
-        boatGroup.position.set(380, -0.2, 0);
+        boatGroup.position.set(280, -0.2, 0);
         scene.add(boatGroup);
 
-        // Airplane (Parked on LSIA Runway)
+        // Airplane
         const planeGroup = new THREE.Group();
         const fuselage = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 14), new THREE.MeshLambertMaterial({ color: 0xecf0f1 }));
         fuselage.position.y = 1.5; planeGroup.add(fuselage);
         const wings = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, 4), new THREE.MeshLambertMaterial({ color: 0xbdc3c7 }));
         wings.position.set(0, 1.5, 0); planeGroup.add(wings);
-        const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.8, 2.5), new THREE.MeshLambertMaterial({ color: 0xe74c3c }));
-        tail.position.set(0, 3.2, -6); planeGroup.add(tail);
-        planeGroup.position.set(240, 0, -60);
+        planeGroup.position.set(180, 0, -50);
         scene.add(planeGroup);
 
         // --- 4. CONTROLS & LOGIC ---
@@ -409,14 +342,6 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            trafficCars.forEach(car => {
-                car.group.position.z += car.speed;
-                if (car.group.position.z > car.zMax) car.group.position.z = car.zMin;
-                let obj = solidObjects.find(o => o.mesh === car.group);
-                if (obj) obj.z = car.group.position.z;
-            });
-
-            // Random independent NPC movement
             npcPeople.forEach(p => {
                 p.group.position.x += p.speedX;
                 p.group.position.z += p.speedZ;
@@ -447,7 +372,7 @@
                 }
 
                 const blip = document.getElementById('map-blip');
-                blip.style.transform = `translate(${playerGroup.position.x * 0.2}px, ${playerGroup.position.z * 0.2}px)`;
+                blip.style.transform = `translate(${playerGroup.position.x * 0.25}px, ${playerGroup.position.z * 0.25}px)`;
 
                 let distToCar = playerGroup.position.distanceTo(carGroup.position);
                 let distToBoat = playerGroup.position.distanceTo(boatGroup.position);
@@ -508,7 +433,7 @@
 
                 if (planeSpeed > 0.3) {
                     planeAltitude += (moveY * 0.3);
-                    planeAltitude = Math.max(0, Math.min(280, planeAltitude));
+                    planeAltitude = Math.max(0, Math.min(250, planeAltitude));
                 }
 
                 planeGroup.position.y = planeAltitude;
@@ -516,9 +441,9 @@
                 planeGroup.position.z += Math.cos(vehicleRotation) * planeSpeed;
 
                 camera.position.set(
-                    planeGroup.position.x - Math.sin(vehicleRotation) * 28, 
-                    planeGroup.position.y + 10, 
-                    planeGroup.position.z - Math.cos(vehicleRotation) * 28
+                    planeGroup.position.x - Math.sin(vehicleRotation) * 26, 
+                    planeGroup.position.y + 9, 
+                    planeGroup.position.z - Math.cos(vehicleRotation) * 26
                 );
                 camera.lookAt(planeGroup.position);
             }
