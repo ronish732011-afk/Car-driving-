@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Open World 3D - Ultimate GTA Edition</title>
+    <title>Open World 3D - Ultimate City & Highway Edition</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; }
         #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -57,8 +57,8 @@
         <div id="hud-stats">
             <div>HEALTH <div class="bar-container"><div class="health-fill"></div></div></div>
             <div>ARMOR <div class="bar-container"><div class="armor-fill"></div></div></div>
-            <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$15,200,400</div>
-            <div style="margin-top: 10px; font-size: 14px;">AMMO 120/500</div>
+            <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$25,800,200</div>
+            <div style="margin-top: 10px; font-size: 14px;">AMMO 200/800</div>
         </div>
 
         <div id="joystick-base">
@@ -74,7 +74,7 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2500);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
@@ -86,81 +86,96 @@
         dirLight.position.set(100, 150, 100);
         scene.add(dirLight);
 
-        // --- 2. MASSIVE ENVIRONMENT & MOUNTAIN ---
-        const sea = new THREE.Mesh(new THREE.PlaneGeometry(3500, 3500), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
+        // --- 2. ENVIRONMENT & WIDE HIGHWAY ROADS ---
+        const sea = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
         sea.rotation.x = -Math.PI / 2; sea.position.y = -0.6; scene.add(sea);
 
         const islandMat = new THREE.MeshLambertMaterial({ color: 0x4e6e3d }); 
-        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(320, 340, 1, 32), islandMat);
+        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(350, 370, 1, 32), islandMat);
         mainIsland.position.y = -0.5; scene.add(mainIsland);
 
-        // Huge Mountain (Vinewood Hills)
-        const mountain = new THREE.Mesh(new THREE.ConeGeometry(100, 80, 16), new THREE.MeshLambertMaterial({ color: 0x6e5c46 }));
-        mountain.position.set(-160, 40, -160);
+        // Huge Mountain
+        const mountain = new THREE.Mesh(new THREE.ConeGeometry(110, 85, 16), new THREE.MeshLambertMaterial({ color: 0x6e5c46 }));
+        mountain.position.set(-180, 42, -180);
         scene.add(mountain);
 
-        // Airport Runway & Area
+        // Airport & Runway
+        const airportBase = new THREE.Mesh(new THREE.BoxGeometry(120, 0.05, 350), new THREE.MeshLambertMaterial({ color: 0x333333 }));
+        airportBase.position.set(220, -0.44, 0);
+        scene.add(airportBase);
+
         const runwayMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-        const runway = new THREE.Mesh(new THREE.BoxGeometry(45, 0.08, 280), runwayMat);
-        runway.position.set(180, -0.46, 0);
+        const runway = new THREE.Mesh(new THREE.BoxGeometry(35, 0.08, 320), runwayMat);
+        runway.position.set(220, -0.43, 0);
         scene.add(runway);
 
-        // --- ROADS WITH WHITE STRIPES & SIGNBOARDS ---
-        const roadMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a }); 
-        const road1 = new THREE.Mesh(new THREE.BoxGeometry(600, 0.06, 16), roadMat); road1.position.set(0, -0.47, 0); scene.add(road1);
-        const road2 = new THREE.Mesh(new THREE.BoxGeometry(16, 0.06, 600), roadMat); road2.position.set(0, -0.46, 0); scene.add(road2);
+        // --- WIDE HIGHWAY ROADS & STRIPES ---
+        const highwayMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a }); 
+        
+        // Main Horizontal Highway (Raised slightly above ground so it's clearly visible)
+        const highwayH = new THREE.Mesh(new THREE.BoxGeometry(700, 0.08, 28), highwayMat); 
+        highwayH.position.set(0, -0.42, 0); 
+        scene.add(highwayH);
 
-        // Road White Center Stripes
-        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        for(let i = -280; i <= 280; i += 20) {
-            const stripe = new THREE.Mesh(new THREE.BoxGeometry(2, 0.07, 6), stripeMat);
-            stripe.position.set(0, -0.45, i);
-            scene.add(stripe);
+        // Main Vertical Highway
+        const highwayV = new THREE.Mesh(new THREE.BoxGeometry(28, 0.08, 700), highwayMat); 
+        highwayV.position.set(0, -0.41, 0); 
+        scene.add(highwayV);
+
+        // Highway Center Yellow/White Divider Lines
+        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        for(let i = -330; i <= 330; i += 25) {
+            const stripeH = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 1), stripeMat);
+            stripeH.position.set(i, -0.40, 0);
+            scene.add(stripeH);
+
+            const stripeV = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 8), stripeMat);
+            stripeV.position.set(0, -0.40, i);
+            scene.add(stripeV);
         }
 
-        // 3D Signboards (Airport & City Guide)
-        function createSignboard(x, z, textRot, label) {
-            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 3), new THREE.MeshLambertMaterial({ color: 0x333333 }));
-            post.position.set(x, 1.5, z); scene.add(post);
-            const board = new THREE.Mesh(new THREE.BoxGeometry(3.5, 1.2, 0.2), new THREE.MeshLambertMaterial({ color: 0x27ae60 }));
-            board.position.set(x, 3.2, z); board.rotation.y = textRot;
-            scene.add(board);
-        }
-        createSignboard(12, -25, 0, "To City Center");
-        createSignboard(120, -50, Math.PI/2, "To Airport ->");
-
-        // Traffic Lights at Crossings
-        function createTrafficLight(x, z) {
-            const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 5), new THREE.MeshLambertMaterial({ color: 0x444444 }));
-            pole.position.set(x, 2.5, z); scene.add(pole);
-            const box = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.8, 0.5), new THREE.MeshLambertMaterial({ color: 0x111111 }));
-            box.position.set(x, 4.5, z); scene.add(box);
-        }
-        createTrafficLight(10, 10); createTrafficLight(-10, -10);
-
-        // Solid Buildings with Collisions
+        // --- DETAILED BUILDINGS (With Windows & Doors) ---
         const solidObjects = [];
-        function createBuilding(x, z, w, h, d, colorHex) {
+        function createDetailedBuilding(x, z, w, h, d, colorHex) {
+            const bGroup = new THREE.Group();
             const bMat = new THREE.MeshLambertMaterial({ color: colorHex || 0x7f8c8d });
-            const bGeo = new THREE.BoxGeometry(w, h, d);
-            const building = new THREE.Mesh(bGeo, bMat);
-            building.position.set(x, h/2 - 0.5, z);
-            scene.add(building);
+            const mainBody = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), bMat);
+            mainBody.position.y = h / 2 - 0.5;
+            bGroup.add(mainBody);
+
+            const winMat = new THREE.MeshBasicMaterial({ color: 0xf1c40f }); 
+            const doorMat = new THREE.MeshLambertMaterial({ color: 0x4e342e }); 
+            
+            const door = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.5, 0.2), doorMat);
+            door.position.set(0, 1.2, d/2 + 0.1);
+            bGroup.add(door);
+
+            for(let wy = 3; wy < h - 2; wy += 4) {
+                for(let wx = -w/3; wx <= w/3; wx += 3) {
+                    const win = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.8, 0.2), winMat);
+                    win.position.set(wx, wy, d/2 + 0.1);
+                    bGroup.add(win);
+                }
+            }
+
+            bGroup.position.set(x, 0, z);
+            scene.add(bGroup);
             solidObjects.push({ x, z, w: w + 1.2, d: d + 1.2 });
         }
 
-        for (let x = -200; x <= 200; x += 38) {
-            if (Math.abs(x) < 22 || x > 120) continue;
-            createBuilding(x, -55, 18, 45 + Math.random() * 30, 18, 0x95a5a6);
-            createBuilding(x, 55, 18, 40 + Math.random() * 35, 18, 0xbdc3c7);
+        // Place buildings neatly alongside the wide highways
+        for (let x = -240; x <= 140; x += 45) {
+            if (Math.abs(x) < 30) continue;
+            createDetailedBuilding(x, -70, 22, 50 + Math.random() * 25, 22, 0x95a5a6);
+            createDetailedBuilding(x, 70, 22, 45 + Math.random() * 30, 22, 0xbdc3c7);
         }
-        for (let z = -200; z <= 200; z += 38) {
-            if (Math.abs(z) < 22) continue;
-            createBuilding(-55, z, 18, 50 + Math.random() * 25, 18, 0x7f8c8d);
-            createBuilding(55, z, 18, 55 + Math.random() * 20, 18, 0x95a5a6);
+        for (let z = -240; z <= 240; z += 45) {
+            if (Math.abs(z) < 30) continue;
+            createDetailedBuilding(-70, z, 22, 55 + Math.random() * 20, 22, 0x7f8c8d);
+            createDetailedBuilding(70, z, 22, 48 + Math.random() * 28, 22, 0x95a5a6);
         }
 
-        // --- 3. DETAILED NPC PEOPLE (Walking with Limbs) & TRAFFIC CARS ---
+        // --- CROWDED NPC PEOPLE & TRAFFIC ---
         const npcPeople = [];
         function createDetailedNPC(x, z) {
             const npcGroup = new THREE.Group();
@@ -171,11 +186,13 @@
             npcGroup.position.set(x, 0, z);
             scene.add(npcGroup);
             solidObjects.push({ x, z, w: 1.0, d: 1.0, isDynamic: true, mesh: npcGroup });
-            npcPeople.push({ group: npcGroup, xMin: x - 10, xMax: x + 10, speed: 0.04, dir: 1 });
+            npcPeople.push({ group: npcGroup, xMin: x - 12, xMax: x + 12, speed: 0.05, dir: 1 });
         }
-        createDetailedNPC(-14, -15); createDetailedNPC(14, 25); createDetailedNPC(-18, 35);
+        for(let i = -120; i <= 120; i += 30) {
+            createDetailedNPC(18, i);
+            createDetailedNPC(-18, i + 15);
+        }
 
-        // Traffic Cars (Solid & Movable)
         const trafficCars = [];
         function spawnTrafficCar(x, z, color) {
             const carGroup = new THREE.Group();
@@ -186,13 +203,13 @@
             carGroup.position.set(x, 0, z);
             scene.add(carGroup);
             solidObjects.push({ x, z, w: 2.5, d: 4.5, isDynamic: true, mesh: carGroup });
-            trafficCars.push({ group: carGroup, zMin: -220, zMax: 220, speed: 0.35 });
+            trafficCars.push({ group: carGroup, zMin: -280, zMax: 280, speed: 0.45 });
         }
-        spawnTrafficCar(-5, 50, 0xe74c3c); // Red car
-        spawnTrafficCar(5, -70, 0xf1c40f); // Yellow car
-        spawnTrafficCar(-5, 120, 0x3498db); // Blue car
+        spawnTrafficCar(-6, 70, 0xe74c3c);
+        spawnTrafficCar(6, -100, 0xf1c40f);
+        spawnTrafficCar(-6, 160, 0x3498db);
 
-        // --- 4. PLAYER, SPORTS CAR, SPEED BOAT & AIRPLANE ---
+        // --- PLAYER, SPORTS CAR, SPEED BOAT & AIRPLANE ---
         const playerGroup = new THREE.Group();
         const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.4), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
         torso.position.y = 1.1; playerGroup.add(torso);
@@ -209,42 +226,43 @@
         const leftLeg = new THREE.Mesh(legGeo, legMat); leftLeg.position.set(-0.2, 0.45, 0); playerGroup.add(leftLeg);
         const rightLeg = new THREE.Mesh(legGeo, legMat); rightLeg.position.set(0.2, 0.45, 0); playerGroup.add(rightLeg);
 
-        playerGroup.position.set(-20, 0, -20);
+        playerGroup.position.set(-25, 0, -25);
         scene.add(playerGroup);
 
-        // Sports Car (Player Driveable)
+        // Sports Car
         const carGroup = new THREE.Group();
         const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 4.2), new THREE.MeshLambertMaterial({ color: 0xd35400 }));
         carBody.position.y = 0.6; carGroup.add(carBody);
         const carCabin = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.6, 2.2), new THREE.MeshLambertMaterial({ color: 0x111111 }));
         carCabin.position.set(0, 1.2, -0.2); carGroup.add(carCabin);
-        carGroup.position.set(20, 0, 15);
+        carGroup.position.set(25, 0, 20);
         scene.add(carGroup);
 
         // Speed Boat
         const boatGroup = new THREE.Group();
         const boatHull = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 5.0), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
         boatHull.position.y = 0.3; boatGroup.add(boatHull);
-        boatGroup.position.set(300, -0.2, 0);
+        boatGroup.position.set(350, -0.2, 0);
         scene.add(boatGroup);
 
-        // Airplane (At Airport)
+        // Airplane
         const planeGroup = new THREE.Group();
-        const fuselage = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 12), new THREE.MeshLambertMaterial({ color: 0xecf0f1 }));
+        const fuselage = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 14), new THREE.MeshLambertMaterial({ color: 0xecf0f1 }));
         fuselage.position.y = 1.5; planeGroup.add(fuselage);
-        const wings = new THREE.Mesh(new THREE.BoxGeometry(16, 0.3, 3.5), new THREE.MeshLambertMaterial({ color: 0xbdc3c7 }));
+        const wings = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, 4), new THREE.MeshLambertMaterial({ color: 0xbdc3c7 }));
         wings.position.set(0, 1.5, 0); planeGroup.add(wings);
-        const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.5, 2), new THREE.MeshLambertMaterial({ color: 0xe74c3c }));
-        tail.position.set(0, 3, -5); planeGroup.add(tail);
-        planeGroup.position.set(180, 0, -60);
+        const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.8, 2.5), new THREE.MeshLambertMaterial({ color: 0xe74c3c }));
+        tail.position.set(0, 3.2, -6); planeGroup.add(tail);
+        planeGroup.position.set(220, 0, -50);
         scene.add(planeGroup);
 
-        // --- 5. CONTROLS & PHYSICS COLLISION ---
-        let vehicleState = 'none'; // 'none', 'car', 'boat', 'plane'
+        // --- 4. CONTROLS & LOGIC ---
+        let vehicleState = 'none'; 
         let moveX = 0, moveY = 0; 
         let playerSpeed = 0.18;
         let vehicleSpeed = 0;
         let vehicleRotation = 0;
+        let planeSpeed = 0;
         let planeAltitude = 0;
         let walkCycle = 0;
 
@@ -335,14 +353,16 @@
                 playerGroup.position.set(boatGroup.position.x - 3, 0, boatGroup.position.z);
                 actionBtn.innerText = "Enter";
             } else if (vehicleState === 'plane') {
-                vehicleState = 'none'; playerGroup.visible = true;
-                playerGroup.position.set(planeGroup.position.x - 4, 0, planeGroup.position.z);
-                planeGroup.position.y = 0;
-                actionBtn.innerText = "Enter";
+                if (planeAltitude < 3) {
+                    vehicleState = 'none'; playerGroup.visible = true;
+                    playerGroup.position.set(planeGroup.position.x - 4, 0, planeGroup.position.z);
+                    actionBtn.innerText = "Enter";
+                } else {
+                    alert("Land the plane before exiting!");
+                }
             }
         });
 
-        // Solid Collision Checker (Prevents walking or driving through buildings/objects)
         function checkCollision(nx, nz, radius = 0.8) {
             for (let obj of solidObjects) {
                 if (Math.abs(nx - obj.x) < (obj.w / 2 + radius) && Math.abs(nz - obj.z) < (obj.d / 2 + radius)) {
@@ -352,20 +372,17 @@
             return false;
         }
 
-        // --- 6. GAME LOOP ---
+        // --- 5. GAME LOOP ---
         function animate() {
             requestAnimationFrame(animate);
 
-            // Animate Traffic Cars
             trafficCars.forEach(car => {
                 car.group.position.z += car.speed;
                 if (car.group.position.z > car.zMax) car.group.position.z = car.zMin;
-                // Update dynamic collision coordinate
                 let obj = solidObjects.find(o => o.mesh === car.group);
                 if (obj) obj.z = car.group.position.z;
             });
 
-            // Animate NPCs
             npcPeople.forEach(p => {
                 p.group.position.x += p.speed * p.dir;
                 if (p.group.position.x > p.xMax || p.group.position.x < p.xMin) p.dir *= -1;
@@ -441,27 +458,27 @@
                 camera.lookAt(boatGroup.position);
 
             } else if (vehicleState === 'plane') {
-                let targetSpeed = moveY * 0.65;
-                vehicleSpeed += (targetSpeed - vehicleSpeed) * 0.05;
+                let targetPlaneSpeed = Math.max(0.2, moveY * 0.7); 
+                planeSpeed += (targetPlaneSpeed - planeSpeed) * 0.05;
 
                 if (moveX !== 0) {
-                    vehicleRotation -= moveX * 0.04;
+                    vehicleRotation -= moveX * 0.045;
                     planeGroup.rotation.y = vehicleRotation;
                 }
 
-                if (vehicleSpeed > 0.1) {
-                    planeAltitude += (moveY * 0.25);
-                    planeAltitude = Math.max(1, Math.min(180, planeAltitude));
+                if (planeSpeed > 0.3) {
+                    planeAltitude += (moveY * 0.3);
+                    planeAltitude = Math.max(0, Math.min(250, planeAltitude));
                 }
 
                 planeGroup.position.y = planeAltitude;
-                planeGroup.position.x += Math.sin(vehicleRotation) * vehicleSpeed;
-                planeGroup.position.z += Math.cos(vehicleRotation) * vehicleSpeed;
+                planeGroup.position.x += Math.sin(vehicleRotation) * planeSpeed;
+                planeGroup.position.z += Math.cos(vehicleRotation) * planeSpeed;
 
                 camera.position.set(
-                    planeGroup.position.x - Math.sin(vehicleRotation) * 24, 
-                    planeGroup.position.y + 8, 
-                    planeGroup.position.z - Math.cos(vehicleRotation) * 24
+                    planeGroup.position.x - Math.sin(vehicleRotation) * 26, 
+                    planeGroup.position.y + 9, 
+                    planeGroup.position.z - Math.cos(vehicleRotation) * 26
                 );
                 camera.lookAt(planeGroup.position);
             }
