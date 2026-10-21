@@ -3,19 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Open World 3D - Ultimate City & Highway Edition</title>
+    <title>Open World 3D - GTA V LSIA Edition</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; touch-action: none; }
         #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
-        /* GTA Style HUD Overlay */
+        /* GTA Style Mini-Map & HUD */
         #minimap {
             position: absolute; top: 15px; left: 15px;
-            width: 140px; height: 100px;
-            background: rgba(20, 30, 40, 0.7);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 6px;
+            width: 150px; height: 110px;
+            background: rgba(20, 35, 50, 0.85);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
         }
+        /* Mini map radar lines */
+        #minimap::before {
+            content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: rgba(255,255,255,0.2);
+        }
+        #minimap::after {
+            content: ''; position: absolute; top: 0; left: 50%; width: 2px; height: 100%; background: rgba(255,255,255,0.2);
+        }
+        #map-blip {
+            position: absolute; top: 55px; left: 72px; width: 8px; height: 8px; background: #3498db; border: 1px solid #fff; border-radius: 50%;
+        }
+
         #hud-stats {
             position: absolute; top: 15px; right: 15px;
             text-align: right; color: white; font-weight: bold; font-size: 13px;
@@ -23,7 +35,7 @@
         }
         .bar-container { width: 120px; height: 8px; background: rgba(0,0,0,0.5); border-radius: 4px; margin-top: 4px; display: inline-block; overflow: hidden; border: 1px solid rgba(255,255,255,0.3); }
         .health-fill { width: 100%; height: 100%; background: #2ecc71; }
-        .armor-fill { width: 80%; height: 100%; background: #3498db; }
+        .armor-fill { width: 85%; height: 100%; background: #3498db; }
 
         /* Joystick styling (Left) */
         #joystick-base {
@@ -53,12 +65,13 @@
 <body>
 
     <div id="ui">
-        <div id="minimap"></div>
+        <div id="minimap"><div id="map-blip"></div></div>
         <div id="hud-stats">
             <div>HEALTH <div class="bar-container"><div class="health-fill"></div></div></div>
             <div>ARMOR <div class="bar-container"><div class="armor-fill"></div></div></div>
-            <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$25,800,200</div>
-            <div style="margin-top: 10px; font-size: 14px;">AMMO 200/800</div>
+            <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$8,450,210</div>
+            <div style="margin-top: 6px; font-size: 13px; color: #bdc3c7;">LSIA Tarmac</div>
+            <div style="margin-top: 8px; font-size: 14px;">AMMO 45/180</div>
         </div>
 
         <div id="joystick-base">
@@ -74,67 +87,81 @@
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb); // Sky blue
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 3500);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
         // Lights
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
         scene.add(ambientLight);
         const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
         dirLight.position.set(100, 150, 100);
         scene.add(dirLight);
 
-        // --- 2. ENVIRONMENT & WIDE HIGHWAY ROADS ---
-        const sea = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
+        // --- 2. ENVIRONMENT & LSIA AIRPORT RUNWAY ---
+        const sea = new THREE.Mesh(new THREE.PlaneGeometry(4500, 4500), new THREE.MeshBasicMaterial({ color: 0x1e90ff }));
         sea.rotation.x = -Math.PI / 2; sea.position.y = -0.6; scene.add(sea);
 
         const islandMat = new THREE.MeshLambertMaterial({ color: 0x4e6e3d }); 
-        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(350, 370, 1, 32), islandMat);
+        const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(380, 400, 1, 32), islandMat);
         mainIsland.position.y = -0.5; scene.add(mainIsland);
 
         // Huge Mountain
-        const mountain = new THREE.Mesh(new THREE.ConeGeometry(110, 85, 16), new THREE.MeshLambertMaterial({ color: 0x6e5c46 }));
-        mountain.position.set(-180, 42, -180);
+        const mountain = new THREE.Mesh(new THREE.ConeGeometry(120, 90, 16), new THREE.MeshLambertMaterial({ color: 0x6e5c46 }));
+        mountain.position.set(-200, 45, -200);
         scene.add(mountain);
 
-        // Airport & Runway
-        const airportBase = new THREE.Mesh(new THREE.BoxGeometry(120, 0.05, 350), new THREE.MeshLambertMaterial({ color: 0x333333 }));
-        airportBase.position.set(220, -0.44, 0);
-        scene.add(airportBase);
+        // --- LSIA AIRPORT RUNWAY & MARKINGS ---
+        const airportGroup = new THREE.Group();
+        const tarmac = new THREE.Mesh(new THREE.BoxGeometry(180, 0.05, 420), new THREE.MeshLambertMaterial({ color: 0x222222 }));
+        tarmac.position.set(240, -0.45, 0);
+        airportGroup.add(tarmac);
 
-        const runwayMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-        const runway = new THREE.Mesh(new THREE.BoxGeometry(35, 0.08, 320), runwayMat);
-        runway.position.set(220, -0.43, 0);
-        scene.add(runway);
+        const runway = new THREE.Mesh(new THREE.BoxGeometry(45, 0.09, 380), new THREE.MeshBasicMaterial({ color: 0x111111 }));
+        runway.position.set(240, -0.43, 0);
+        airportGroup.add(runway);
 
-        // --- WIDE HIGHWAY ROADS & STRIPES ---
-        const highwayMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a }); 
-        
-        // Main Horizontal Highway (Raised slightly above ground so it's clearly visible)
-        const highwayH = new THREE.Mesh(new THREE.BoxGeometry(700, 0.08, 28), highwayMat); 
-        highwayH.position.set(0, -0.42, 0); 
+        // Runway White Threshold Stripes
+        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        for(let zOffset = -170; z <= 170; z += 30) {
+            const stripe = new THREE.Mesh(new THREE.BoxGeometry(3, 0.1, 10), stripeMat);
+            stripe.position.set(240, -0.40, zOffset);
+            airportGroup.add(stripe);
+        }
+
+        // Control Tower (GTA Style)
+        const towerMat = new THREE.MeshLambertMaterial({ color: 0x95a5a6 });
+        const tower = new THREE.Mesh(new THREE.BoxGeometry(9, 42, 9), towerMat);
+        tower.position.set(310, 21, -120);
+        airportGroup.add(tower);
+        const towerTop = new THREE.Mesh(new THREE.BoxGeometry(14, 7, 14), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
+        towerTop.position.set(310, 44, -120);
+        airportGroup.add(towerTop);
+        scene.add(airportGroup);
+
+        // --- WIDE HIGHWAY ROADS ---
+        const roadMat = new THREE.MeshBasicMaterial({ color: 0x111111 }); 
+        const highwayH = new THREE.Mesh(new THREE.BoxGeometry(750, 0.1, 30), roadMat); 
+        highwayH.position.set(0, -0.38, 0); 
         scene.add(highwayH);
 
-        // Main Vertical Highway
-        const highwayV = new THREE.Mesh(new THREE.BoxGeometry(28, 0.08, 700), highwayMat); 
-        highwayV.position.set(0, -0.41, 0); 
+        const highwayV = new THREE.Mesh(new THREE.BoxGeometry(30, 0.1, 750), roadMat); 
+        highwayV.position.set(0, -0.37, 0); 
         scene.add(highwayV);
 
-        // Highway Center Yellow/White Divider Lines
-        const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        for(let i = -330; i <= 330; i += 25) {
-            const stripeH = new THREE.Mesh(new THREE.BoxGeometry(8, 0.1, 1), stripeMat);
-            stripeH.position.set(i, -0.40, 0);
+        const yellowStripeMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        for(let i = -350; i <= 350; i += 25) {
+            const stripeH = new THREE.Mesh(new THREE.BoxGeometry(10, 0.12, 1.2), yellowStripeMat);
+            stripeH.position.set(i, -0.35, 0);
             scene.add(stripeH);
 
-            const stripeV = new THREE.Mesh(new THREE.BoxGeometry(1, 0.1, 8), stripeMat);
-            stripeV.position.set(0, -0.40, i);
+            const stripeV = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.12, 10), yellowStripeMat);
+            stripeV.position.set(0, -0.35, i);
             scene.add(stripeV);
         }
 
-        // --- DETAILED BUILDINGS (With Windows & Doors) ---
+        // --- DETAILED BUILDINGS (Windows & Doors) ---
         const solidObjects = [];
         function createDetailedBuilding(x, z, w, h, d, colorHex) {
             const bGroup = new THREE.Group();
@@ -163,34 +190,33 @@
             solidObjects.push({ x, z, w: w + 1.2, d: d + 1.2 });
         }
 
-        // Place buildings neatly alongside the wide highways
-        for (let x = -240; x <= 140; x += 45) {
-            if (Math.abs(x) < 30) continue;
-            createDetailedBuilding(x, -70, 22, 50 + Math.random() * 25, 22, 0x95a5a6);
-            createDetailedBuilding(x, 70, 22, 45 + Math.random() * 30, 22, 0xbdc3c7);
+        for (let x = -260; x <= 140; x += 48) {
+            if (Math.abs(x) < 35) continue;
+            createDetailedBuilding(x, -75, 22, 55 + Math.random() * 25, 22, 0x95a5a6);
+            createDetailedBuilding(x, 75, 22, 50 + Math.random() * 30, 22, 0xbdc3c7);
         }
-        for (let z = -240; z <= 240; z += 45) {
-            if (Math.abs(z) < 30) continue;
-            createDetailedBuilding(-70, z, 22, 55 + Math.random() * 20, 22, 0x7f8c8d);
-            createDetailedBuilding(70, z, 22, 48 + Math.random() * 28, 22, 0x95a5a6);
+        for (let z = -260; z <= 260; z += 48) {
+            if (Math.abs(z) < 35) continue;
+            createDetailedBuilding(-75, z, 22, 60 + Math.random() * 20, 22, 0x7f8c8d);
+            createDetailedBuilding(75, z, 22, 52 + Math.random() * 28, 22, 0x95a5a6);
         }
 
-        // --- CROWDED NPC PEOPLE & TRAFFIC ---
+        // --- WANDERING NPC PEOPLE & TRAFFIC ---
         const npcPeople = [];
-        function createDetailedNPC(x, z) {
+        function createWanderingNPC(x, z) {
             const npcGroup = new THREE.Group();
-            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.35), new THREE.MeshLambertMaterial({ color: 0x9b59b6 }));
+            const torso = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.35), new THREE.MeshLambertMaterial({ color: 0xe67e22 }));
             torso.position.y = 1.0; npcGroup.add(torso);
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), new THREE.MeshLambertMaterial({ color: 0xffdbac }));
             head.position.y = 1.6; npcGroup.add(head);
             npcGroup.position.set(x, 0, z);
             scene.add(npcGroup);
             solidObjects.push({ x, z, w: 1.0, d: 1.0, isDynamic: true, mesh: npcGroup });
-            npcPeople.push({ group: npcGroup, xMin: x - 12, xMax: x + 12, speed: 0.05, dir: 1 });
+            npcPeople.push({ group: npcGroup, xMin: x - 15, xMax: x + 15, speed: 0.04, dir: 1 });
         }
-        for(let i = -120; i <= 120; i += 30) {
-            createDetailedNPC(18, i);
-            createDetailedNPC(-18, i + 15);
+        for(let i = -140; i <= 140; i += 35) {
+            createWanderingNPC(20, i);
+            createWanderingNPC(-20, i + 18);
         }
 
         const trafficCars = [];
@@ -203,11 +229,11 @@
             carGroup.position.set(x, 0, z);
             scene.add(carGroup);
             solidObjects.push({ x, z, w: 2.5, d: 4.5, isDynamic: true, mesh: carGroup });
-            trafficCars.push({ group: carGroup, zMin: -280, zMax: 280, speed: 0.45 });
+            trafficCars.push({ group: carGroup, zMin: -300, zMax: 300, speed: 0.45 });
         }
-        spawnTrafficCar(-6, 70, 0xe74c3c);
-        spawnTrafficCar(6, -100, 0xf1c40f);
-        spawnTrafficCar(-6, 160, 0x3498db);
+        spawnTrafficCar(-7, 80, 0xe74c3c);
+        spawnTrafficCar(7, -110, 0xf1c40f);
+        spawnTrafficCar(-7, 180, 0x3498db);
 
         // --- PLAYER, SPORTS CAR, SPEED BOAT & AIRPLANE ---
         const playerGroup = new THREE.Group();
@@ -242,10 +268,10 @@
         const boatGroup = new THREE.Group();
         const boatHull = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 5.0), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
         boatHull.position.y = 0.3; boatGroup.add(boatHull);
-        boatGroup.position.set(350, -0.2, 0);
+        boatGroup.position.set(380, -0.2, 0);
         scene.add(boatGroup);
 
-        // Airplane
+        // Airplane (Parked on LSIA Tarmac Runway)
         const planeGroup = new THREE.Group();
         const fuselage = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 14), new THREE.MeshLambertMaterial({ color: 0xecf0f1 }));
         fuselage.position.y = 1.5; planeGroup.add(fuselage);
@@ -253,10 +279,10 @@
         wings.position.set(0, 1.5, 0); planeGroup.add(wings);
         const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 2.8, 2.5), new THREE.MeshLambertMaterial({ color: 0xe74c3c }));
         tail.position.set(0, 3.2, -6); planeGroup.add(tail);
-        planeGroup.position.set(220, 0, -50);
+        planeGroup.position.set(240, 0, -60);
         scene.add(planeGroup);
 
-        // --- 4. CONTROLS & LOGIC ---
+        // --- 4. CONTROLS & UNIQUE VEHICLE LOGIC ---
         let vehicleState = 'none'; 
         let moveX = 0, moveY = 0; 
         let playerSpeed = 0.18;
@@ -409,6 +435,10 @@
                     leftArm.rotation.x = 0; rightArm.rotation.x = 0; leftLeg.rotation.x = 0; rightLeg.rotation.x = 0;
                 }
 
+                // Update Mini-map blip position based on player coordinates
+                const blip = document.getElementById('map-blip');
+                blip.style.transform = `translate(${playerGroup.position.x * 0.2}px, ${playerGroup.position.z * 0.2}px)`;
+
                 let distToCar = playerGroup.position.distanceTo(carGroup.position);
                 let distToBoat = playerGroup.position.distanceTo(boatGroup.position);
                 let distToPlane = playerGroup.position.distanceTo(planeGroup.position);
@@ -468,7 +498,7 @@
 
                 if (planeSpeed > 0.3) {
                     planeAltitude += (moveY * 0.3);
-                    planeAltitude = Math.max(0, Math.min(250, planeAltitude));
+                    planeAltitude = Math.max(0, Math.min(280, planeAltitude));
                 }
 
                 planeGroup.position.y = planeAltitude;
@@ -476,9 +506,9 @@
                 planeGroup.position.z += Math.cos(vehicleRotation) * planeSpeed;
 
                 camera.position.set(
-                    planeGroup.position.x - Math.sin(vehicleRotation) * 26, 
-                    planeGroup.position.y + 9, 
-                    planeGroup.position.z - Math.cos(vehicleRotation) * 26
+                    planeGroup.position.x - Math.sin(vehicleRotation) * 28, 
+                    planeGroup.position.y + 10, 
+                    planeGroup.position.z - Math.cos(vehicleRotation) * 28
                 );
                 camera.lookAt(planeGroup.position);
             }
