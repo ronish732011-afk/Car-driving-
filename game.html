@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Open World 3D - Burj Khalifa & City Edition</title>
+    <title>Open World 3D - Pro Flight Simulation Edition</title>
     <style>
         body { margin: 0; overflow: hidden; background: #87ceeb; font-family: sans-serif; touch-action: none; }
         #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -52,6 +52,15 @@
             pointer-events: none;
         }
 
+        /* Flight Throttle & Pitch UI Controls (Visible only when in Airplane) */
+        #flight-controls {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            display: none; pointer-events: auto; text-align: center; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 12px; color: white;
+        }
+        .flight-btn {
+            background: #e74c3c; color: white; border: none; padding: 12px 18px; margin: 0 5px; font-weight: bold; border-radius: 8px; font-size: 14px;
+        }
+
         /* Action Button (Right) */
         #action-btn {
             position: absolute; bottom: 50px; right: 40px;
@@ -71,6 +80,15 @@
             <div style="margin-top: 10px; font-size: 16px; color: #ffcc00;">$8,450,210</div>
             <div style="margin-top: 6px; font-size: 13px; color: #bdc3c7;">Downtown City</div>
             <div style="margin-top: 8px; font-size: 14px;">AMMO 45/180</div>
+        </div>
+
+        <!-- Airplane Dedicated UI Controls -->
+        <div id="flight-controls">
+            <div style="margin-bottom: 6px; font-size: 12px; color: #f1c40f;">FLIGHT CONTROLS</div>
+            <button class="flight-btn" id="throttle-up">THROTTLE +</button>
+            <button class="flight-btn" id="throttle-down">THROTTLE -</button>
+            <button class="flight-btn" id="pitch-up" style="background:#27ae60;">PITCH UP (▲)</button>
+            <button class="flight-btn" id="pitch-down" style="background:#2980b9;">PITCH DOWN (▼)</button>
         </div>
 
         <div id="joystick-base">
@@ -106,7 +124,7 @@
         const mainIsland = new THREE.Mesh(new THREE.CylinderGeometry(250, 270, 1, 32), islandMat);
         mainIsland.position.y = -0.5; scene.add(mainIsland);
 
-        // --- BURJ KHALIFA (Massive Skyscraper in City Center) ---
+        // Burj Khalifa in City Center
         const burjGroup = new THREE.Group();
         const bBase = new THREE.Mesh(new THREE.BoxGeometry(12, 120, 12), new THREE.MeshLambertMaterial({ color: 0xbdc3c7 }));
         bBase.position.y = 60; burjGroup.add(bBase);
@@ -117,7 +135,7 @@
         burjGroup.position.set(0, 0, 0);
         scene.add(burjGroup);
 
-        // --- LSIA AIRPORT ONLY (Runway at right side) ---
+        // LSIA Airport Runway
         const airportGroup = new THREE.Group();
         const tarmac = new THREE.Mesh(new THREE.BoxGeometry(120, 0.05, 300), new THREE.MeshLambertMaterial({ color: 0x222222 }));
         tarmac.position.set(180, -0.45, 0);
@@ -128,17 +146,14 @@
         airportGroup.add(runway);
         scene.add(airportGroup);
 
-        // --- WIDE HIGHWAY ROADS ---
+        // Roads
         const roadMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a }); 
         const highwayH = new THREE.Mesh(new THREE.BoxGeometry(500, 0.08, 22), roadMat); 
-        highwayH.position.set(0, -0.42, 0); 
-        scene.add(highwayH);
-
+        highwayH.position.set(0, -0.42, 0); scene.add(highwayH);
         const highwayV = new THREE.Mesh(new THREE.BoxGeometry(22, 0.08, 500), roadMat); 
-        highwayV.position.set(0, -0.41, 0); 
-        scene.add(highwayV);
+        highwayV.position.set(0, -0.41, 0); scene.add(highwayV);
 
-        // --- BUILDINGS ---
+        // Buildings & Collisions
         const solidObjects = [];
         function createBuilding(x, z, w, h, d) {
             const bMat = new THREE.MeshLambertMaterial({ color: 0x7f8c8d });
@@ -147,14 +162,13 @@
             scene.add(building);
             solidObjects.push({ x, z, w: w + 1, d: d + 1 });
         }
-
         for (let x = -180; x <= 120; x += 35) {
             if (Math.abs(x) < 25) continue;
             createBuilding(x, -50, 16, 35 + Math.random() * 20, 16);
             createBuilding(x, 50, 16, 30 + Math.random() * 25, 16);
         }
 
-        // --- RANDOM NPC PEOPLE ---
+        // Random NPCs
         const npcPeople = [];
         function createRandomNPC(x, z) {
             const npcGroup = new THREE.Group();
@@ -165,21 +179,14 @@
             npcGroup.position.set(x, 0, z);
             scene.add(npcGroup);
             solidObjects.push({ x, z, w: 0.8, d: 0.8, isDynamic: true, mesh: npcGroup });
-            
-            npcPeople.push({ 
-                group: npcGroup, 
-                xMin: x - 15, xMax: x + 15, 
-                zMin: z - 15, zMax: z + 15,
-                speedX: (Math.random() - 0.5) * 0.06, 
-                speedZ: (Math.random() - 0.5) * 0.06 
-            });
+            npcPeople.push({ group: npcGroup, xMin: x - 15, xMax: x + 15, zMin: z - 15, zMax: z + 15, speedX: (Math.random() - 0.5) * 0.06, speedZ: (Math.random() - 0.5) * 0.06 });
         }
         for(let i = -100; i <= 100; i += 25) {
             createRandomNPC(15, i);
             createRandomNPC(-15, i + 10);
         }
 
-        // --- PLAYER, SPORTS CAR, SPEED BOAT & AIRPLANE ---
+        // Player & Vehicles
         const playerGroup = new THREE.Group();
         const torso = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.4), new THREE.MeshLambertMaterial({ color: 0x2c3e50 }));
         torso.position.y = 1.1; playerGroup.add(torso);
@@ -199,38 +206,50 @@
         playerGroup.position.set(-20, 0, -20);
         scene.add(playerGroup);
 
-        // Sports Car
         const carGroup = new THREE.Group();
         const carBody = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.8, 4.2), new THREE.MeshLambertMaterial({ color: 0xd35400 }));
         carBody.position.y = 0.6; carGroup.add(carBody);
-        carGroup.position.set(20, 0, 15);
-        scene.add(carGroup);
+        carGroup.position.set(20, 0, 15); scene.add(carGroup);
 
-        // Speed Boat
         const boatGroup = new THREE.Group();
         const boatHull = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.7, 5.0), new THREE.MeshLambertMaterial({ color: 0x2980b9 }));
         boatHull.position.y = 0.3; boatGroup.add(boatHull);
-        boatGroup.position.set(280, -0.2, 0);
-        scene.add(boatGroup);
+        boatGroup.position.set(280, -0.2, 0); scene.add(boatGroup);
 
-        // Airplane
         const planeGroup = new THREE.Group();
         const fuselage = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 14), new THREE.MeshLambertMaterial({ color: 0xecf0f1 }));
         fuselage.position.y = 1.5; planeGroup.add(fuselage);
         const wings = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, 4), new THREE.MeshLambertMaterial({ color: 0xbdc3c7 }));
         wings.position.set(0, 1.5, 0); planeGroup.add(wings);
-        planeGroup.position.set(180, 0, -50);
-        scene.add(planeGroup);
+        planeGroup.position.set(180, 0, -50); scene.add(planeGroup);
 
-        // --- 4. CONTROLS & LOGIC ---
+        // --- 4. PRO FLIGHT CONTROLLER LOGIC ---
         let vehicleState = 'none'; 
         let moveX = 0, moveY = 0; 
         let playerSpeed = 0.18;
         let vehicleSpeed = 0;
         let vehicleRotation = 0;
+        
+        // Advanced Airplane Physics Variables
+        let planeThrottle = 0;   // Engine power
         let planeSpeed = 0;
         let planeAltitude = 0;
+        let planePitch = 0;      // Up and Down tilt
         let walkCycle = 0;
+
+        // Button handlers for Airplane Throttle & Pitch
+        let throttleVal = 0;
+        let pitchVal = 0;
+
+        document.getElementById('throttle-up').addEventListener('touchstart', () => { throttleVal = 0.5; });
+        document.getElementById('throttle-up').addEventListener('touchend', () => { throttleVal = 0; });
+        document.getElementById('throttle-down').addEventListener('touchstart', () => { throttleVal = -0.5; });
+        document.getElementById('throttle-down').addEventListener('touchend', () => { throttleVal = 0; });
+
+        document.getElementById('pitch-up').addEventListener('touchstart', () => { pitchVal = 1; });
+        document.getElementById('pitch-up').addEventListener('touchend', () => { pitchVal = 0; });
+        document.getElementById('pitch-down').addEventListener('touchstart', () => { pitchVal = -1; });
+        document.getElementById('pitch-down').addEventListener('touchend', () => { pitchVal = 0; });
 
         let cameraAngleY = 0;
         let cameraAngleX = 0.5;
@@ -238,7 +257,7 @@
         let prevTouchX = 0, prevTouchY = 0;
 
         window.addEventListener('touchstart', (e) => {
-            if (e.touches[0].clientX > window.innerWidth / 2) {
+            if (e.touches[0].clientX > window.innerWidth / 2 && vehicleState === 'none') {
                 isDragging = true;
                 prevTouchX = e.touches[0].clientX;
                 prevTouchY = e.touches[0].clientY;
@@ -309,6 +328,7 @@
                     vehicleState = 'boat'; playerGroup.visible = false; actionBtn.innerText = "Exit Boat";
                 } else if (distToPlane < 8.0) {
                     vehicleState = 'plane'; playerGroup.visible = false; actionBtn.innerText = "Exit Plane";
+                    document.getElementById('flight-controls').style.display = 'block';
                 }
             } else if (vehicleState === 'car') {
                 vehicleState = 'none'; playerGroup.visible = true;
@@ -322,9 +342,10 @@
                 if (planeAltitude < 3) {
                     vehicleState = 'none'; playerGroup.visible = true;
                     playerGroup.position.set(planeGroup.position.x - 4, 0, planeGroup.position.z);
+                    document.getElementById('flight-controls').style.display = 'none';
                     actionBtn.innerText = "Enter";
                 } else {
-                    alert("Land the plane before exiting!");
+                    alert("Land the plane to ground (Altitude 0) before exiting!");
                 }
             }
         });
@@ -423,23 +444,27 @@
                 camera.lookAt(boatGroup.position);
 
             } else if (vehicleState === 'plane') {
-                let targetPlaneSpeed = Math.max(0.2, moveY * 0.7); 
-                planeSpeed += (targetPlaneSpeed - planeSpeed) * 0.05;
+                // --- PRO AIRPLANE THROTTLE & PITCH FLIGHT PHYSICS ---
+                planeThrottle = Math.max(0, Math.min(1, planeThrottle + throttleVal * 0.02));
+                planeSpeed = planeThrottle * 0.8; // Speed based on throttle gear
 
+                // Steering (Left / Right)
                 if (moveX !== 0) {
-                    vehicleRotation -= moveX * 0.045;
+                    vehicleRotation -= moveX * 0.04;
                     planeGroup.rotation.y = vehicleRotation;
                 }
 
-                if (planeSpeed > 0.3) {
-                    planeAltitude += (moveY * 0.3);
-                    planeAltitude = Math.max(0, Math.min(250, planeAltitude));
+                // Pitch (Up / Down control via buttons)
+                if (pitchVal !== 0 && planeSpeed > 0.3) {
+                    planeAltitude += pitchVal * 0.4;
+                    planeAltitude = Math.max(0, Math.min(300, planeAltitude));
                 }
 
                 planeGroup.position.y = planeAltitude;
                 planeGroup.position.x += Math.sin(vehicleRotation) * planeSpeed;
                 planeGroup.position.z += Math.cos(vehicleRotation) * planeSpeed;
 
+                // Flight Camera Chase
                 camera.position.set(
                     planeGroup.position.x - Math.sin(vehicleRotation) * 26, 
                     planeGroup.position.y + 9, 
